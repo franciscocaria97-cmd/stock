@@ -89,7 +89,8 @@
   /* TABLE */
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead tr { background: #f0f3f8; border-bottom: 2px solid var(--border); }
-  th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--navy); white-space: nowrap; cursor: pointer; user-select: none; }
+  th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--navy); white-space: nowrap; cursor: default; user-select: none; }
+  th:first-child { cursor: pointer; }
   th:hover { background: #e8ecf4; }
   th.sort-asc::after  { content:' ↑'; color:var(--olive); }
   th.sort-desc::after { content:' ↓'; color:var(--olive); }
@@ -100,10 +101,10 @@
   tbody tr.alert-row { background: var(--red-bg) !important; border-left: 3px solid var(--red); }
   tbody tr.alert-row:hover { background: #fde8e6 !important; }
   td { padding: 10px 16px; vertical-align: middle; }
-  td:not(:first-child) { text-align: right; }
+  td:not(:first-child) { text-align: center; }
   .product-name { font-weight: 600; font-size: 13px; color: var(--navy); }
 
-  .num-display { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; color: var(--text); display: inline-block; min-width: 60px; text-align: right; }
+  .num-display { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; color: var(--text); display: block; text-align: center; }
   .num-display.low { color: var(--red); font-weight: 700; }
   .num-input { width: 80px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; text-align: right; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); cursor: pointer; outline: none; transition: all 0.12s; -moz-appearance: textfield; }
   .num-input::-webkit-outer-spin-button, .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
@@ -153,6 +154,8 @@
   .btn-primary:hover { background:var(--navy-dark); }
   .btn-red  { background:var(--red); color:#fff; }
   .btn-red:hover { opacity:0.85; }
+  .btn-olive { background:var(--olive); color:#fff; }
+  .btn-olive:hover { background:var(--olive-lt); }
   .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
   .btn-ghost:hover { border-color:var(--navy); color:var(--navy); }
   .btn-sm { font-size:11px; padding:4px 10px; }
@@ -168,6 +171,7 @@
   .p-status.pendiente { background:var(--yellow-bg); color:var(--yellow); border:1px solid #fde68a; }
   .p-status.aprobado  { background:var(--green-bg);  color:var(--green);  border:1px solid #bbf7d0; }
   .p-status.rechazado { background:var(--red-bg);    color:var(--red);    border:1px solid #fecaca; }
+  .p-status.entregado  { background:#f0f5e4; color:var(--olive); border:1px solid #c3e08a; }
   .pedido-items { padding:10px 16px; }
   .p-item-row { display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--border-lt); }
   .p-item-row:last-child { border-bottom:none; }
@@ -257,8 +261,8 @@
             <thead>
               <tr>
                 <th onclick="sortBy(0)" style="width:30%">Producto</th>
-                <th onclick="sortBy(1)">Stock Fábrica</th>
-                <th onclick="sortBy(2)">Stock Depósito</th>
+                <th style="text-align:center">Stock Fábrica</th>
+                <th style="text-align:center">Stock Depósito</th>
                 <th style="text-align:center">Pedir</th>
               </tr>
             </thead>
@@ -361,13 +365,13 @@ async function loadData() {
 
 async function loadPedidos() {
   try {
-    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_PEDIDOS}!A2:F?key=${API_KEY}`);
+    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_PEDIDOS}!A2:G?key=${API_KEY}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     pedidos = (data.values||[]).map((r,i) => ({
       rowIndex:i+2, id:r[0]||'', fecha:r[1]||'', nota:r[2]||'',
-      items:safeJSON(r[3]), status:r[4]||'pendiente', quien:r[5]||'Alejandro',
+      items:safeJSON(r[3]), status:r[4]||'pendiente', quien:r[5]||'Alejandro', fecha_entrega:r[6]||'',
     }));
     renderPedidos(); updateBadge();
   } catch(e) {}
@@ -584,14 +588,19 @@ function pedidoCard(p) {
         <div class="pedido-actions">
           <button class="btn btn-red btn-sm" onclick="responderPedido(${p.rowIndex},'rechazado')">✕ Rechazar</button>
           <button class="btn btn-primary btn-sm" onclick="responderPedido(${p.rowIndex},'aprobado')">✓ Aprobar</button>
+        </div>`:p.status==='aprobado'?`
+        <div class="pedido-actions">
+          <button class="btn btn-olive btn-sm" onclick="responderPedido(${p.rowIndex},'entregado')">📦 Marcar como entregado</button>
         </div>`:''}
+      ${p.status==='entregado'&&p.fecha_entrega?`<div style="padding:6px 16px 10px;font-size:11px;color:var(--muted)">📦 Entregado: ${p.fecha_entrega}</div>`:''}
     </div>`;
 }
 
 async function responderPedido(rowIndex, nuevoStatus) {
   setStatus('Guardando...','saving');
   try {
-    await scriptCall({action:'status', row:rowIndex, status:nuevoStatus});
+    const fechaEntrega = nuevoStatus==='entregado' ? new Date().toLocaleString('es-AR') : '';
+    await scriptCall({action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega});
     const p = pedidos.find(p=>p.rowIndex==rowIndex);
     if (p) p.status = nuevoStatus;
     setStatus(`✓ ${ts()}`, 'ok');
