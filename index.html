@@ -483,11 +483,9 @@ async function onCellChange(input) {
   const dr=rows.find(r=>r.rowIndex==ri); if(dr) dr[field]=val;
   input.classList.add('saving'); saving.add(`${ri}-${col}`); setStatus('Guardando...','saving');
   try {
-    const range=`${SHEET_STOCK}!${col}${ri}`;
-    const res=await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW&key=${API_KEY}`,
-      {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[[val]]})});
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
+    // Columna letra a número (A=1, B=2, C=3, D=4)
+    const colNum = col.charCodeAt(0) - 64;
+    await scriptCall({action:'stock', sheet:SHEET_STOCK, col:colNum, row:ri, val:val});
     input.classList.remove('saving'); input.classList.add('saved');
     saving.delete(`${ri}-${col}`);
     setTimeout(()=>input.classList.remove('saved'),1400);
