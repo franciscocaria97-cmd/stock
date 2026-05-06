@@ -55,7 +55,7 @@
   .page.active { display: block; }
 
   /* STATS */
-  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 18px; }
+  .stats-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 18px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .stat-icon.blue  { background: #e8eef8; }
@@ -241,12 +241,8 @@
         <div><div class="stat-value" id="stat-total">—</div><div class="stat-label">Productos</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green">🏭</div>
-        <div><div class="stat-value" id="stat-fabrica">—</div><div class="stat-label">Total Stock Fábrica</div></div>
-      </div>
-      <div class="stat-card">
         <div class="stat-icon red">⚠️</div>
-        <div><div class="stat-value" id="stat-alertas" style="color:var(--red)">—</div><div class="stat-label">Con Stock Bajo</div></div>
+        <div><div class="stat-value" id="stat-alertas" style="color:var(--red)">—</div><div class="stat-label">Stock Bajo en Depósito</div></div>
       </div>
     </div>
 
@@ -321,6 +317,31 @@ const SHEET_PEDIDOS = 'Pedidos';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbzNggI2bgbc8B6euJTIh2bmYfxbljuE9tesq7S6joY5w0-4qyib8bD6S6gHDDyn9mtc/exec';
 const POLL_MS       = 30000;
 
+// Umbral de stock bajo por producto (depósito)
+const UMBRAL_DEPOSITO = {
+  'Remaches':           20000,
+  'Discos Flap':           10,
+  'Discos de desvaste':    40,
+  'Disco de corte':       100,
+  'Electrodo':             10,
+  'Arandelas':          50000,
+  'Cinta papel':           10,
+  'Ciano':                  5,
+  'Mechas':                20,
+  'Alamabre':              50,
+  'Bolsas':               100,
+  'Thinner':               10,
+  'Diluyente':              5,
+  'Pintura':               20,
+  'Aguarras':               2,
+  'Estopa':                 2,
+};
+
+function isLowDeposito(nombre, val) {
+  const umbral = UMBRAL_DEPOSITO[nombre];
+  return umbral !== undefined ? val < umbral : false;
+}
+
 let rows      = [];
 let carrito   = {};
 let pedidos   = [];
@@ -377,8 +398,7 @@ function safeJSON(s){try{return JSON.parse(s);}catch{return[];}}
 function updateStats() {
   document.getElementById('stats-row').style.display='grid';
   document.getElementById('stat-total').textContent   = rows.length;
-  document.getElementById('stat-fabrica').textContent = rows.reduce((s,r)=>s+r.stock_fabrica,0);
-  document.getElementById('stat-alertas').textContent = rows.filter(r=>r.stock_fabrica<20||r.stock_deposito<10).length;
+  document.getElementById('stat-alertas').textContent = rows.filter(r=>isLowDeposito(r.nombre, r.stock_deposito)).length;
 }
 
 function updateBadge() {
@@ -437,7 +457,7 @@ function renderTable() {
       tb.appendChild(cr);
     }
     items.forEach(row=>{
-      const lF=row.stock_fabrica<20, lD=row.stock_deposito<10;
+      const lF=false, lD=isLowDeposito(row.nombre, row.stock_deposito);
       const tr=document.createElement('tr');
       if(lF||lD) tr.classList.add('alert-row');
       tr.dataset.row=row.rowIndex;
@@ -500,7 +520,7 @@ async function onCellChange(input) {
 function refreshRow(ri){
   const row=rows.find(r=>r.rowIndex==ri),tr=document.querySelector(`tr[data-row="${ri}"]`);
   if(!row||!tr) return;
-  const lF=row.stock_fabrica<20,lD=row.stock_deposito<10;
+  const lF=false,lD=isLowDeposito(row.nombre,row.stock_deposito);
   tr.classList.toggle('alert-row',lF||lD);
   tr.querySelectorAll('.num-input').forEach(i=>{
     if(i.dataset.col==='B')i.classList.toggle('low',lF);
