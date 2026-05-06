@@ -55,7 +55,7 @@
   .page.active { display: block; }
 
   /* STATS */
-  .stats-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 18px; }
+  .stats-row { display: grid; grid-template-columns: repeat(1,1fr); gap: 12px; margin-bottom: 18px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .stat-icon.blue  { background: #e8eef8; }
@@ -236,10 +236,7 @@
   <div class="page active" id="page-stock">
 
     <div class="stats-row" id="stats-row" style="display:none">
-      <div class="stat-card">
-        <div class="stat-icon blue">📦</div>
-        <div><div class="stat-value" id="stat-total">—</div><div class="stat-label">Productos</div></div>
-      </div>
+
       <div class="stat-card">
         <div class="stat-icon red">⚠️</div>
         <div><div class="stat-value" id="stat-alertas" style="color:var(--red)">—</div><div class="stat-label">Stock Bajo en Depósito</div></div>
