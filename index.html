@@ -191,6 +191,7 @@
   #loading { text-align:center; padding:52px; color:var(--muted); font-size:13px; }
   #empty-msg { text-align:center; padding:40px; color:var(--muted); font-size:13px; display:none; }
   .no-pedidos { text-align:center; padding:36px; color:var(--muted); font-size:13px; font-style:italic; }
+  .pedidos-section-title { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--navy); padding:6px 0 10px; border-bottom:2px solid var(--border); margin-bottom:12px; }
   .blink { animation:blink 1s step-end infinite; }
   @keyframes blink { 50%{opacity:0} }
 
@@ -571,16 +572,7 @@ async function enviarPedido(){
   setStatus('Enviando...','saving');
   document.getElementById('cart-send').disabled=true;
   try {
-    // Usar iframe oculto para evitar CORS con Apps Script
-    await new Promise((resolve, reject) => {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = SCRIPT_URL + '?data=' + encodeURIComponent(JSON.stringify(payload));
-      iframe.onload = () => { document.body.removeChild(iframe); resolve(); };
-      iframe.onerror = () => { document.body.removeChild(iframe); resolve(); }; // resolvemos igual
-      document.body.appendChild(iframe);
-      setTimeout(() => { try { document.body.removeChild(iframe); } catch(e){} resolve(); }, 3000);
-    });
+    await scriptCall({action:'pedido', data: JSON.stringify(payload)});
     setStatus(`✓ ${ts()}`,'ok');
     showToast('✓ Pedido enviado a Francisco');
     limpiarCarrito();
@@ -596,10 +588,24 @@ async function enviarPedido(){
 
 // ── RENDER PEDIDOS ────────────────────────────────────────────────────────────
 function renderPedidos(){
-  const sorted=[...pedidos.filter(p=>p.status==='pendiente'),...pedidos.filter(p=>p.status!=='pendiente')];
-  document.getElementById('pedidos-list').innerHTML=sorted.length
-    ?sorted.map(p=>pedidoCard(p)).join('')
-    :'<div class="no-pedidos">No hay pedidos aún.</div>';
+  const pendientes = pedidos.filter(p=>p.status==='pendiente');
+  const historial  = pedidos.filter(p=>p.status!=='pendiente').reverse();
+  
+  let html = '';
+  
+  if (pendientes.length) {
+    html += '<div class="pedidos-section-title">⏳ Pendientes</div>';
+    html += pendientes.map(p=>pedidoCard(p)).join('');
+  }
+  
+  if (historial.length) {
+    html += '<div class="pedidos-section-title" style="margin-top:20px">📋 Historial</div>';
+    html += historial.map(p=>pedidoCard(p)).join('');
+  }
+  
+  if (!html) html = '<div class="no-pedidos">No hay pedidos aún.</div>';
+  
+  document.getElementById('pedidos-list').innerHTML = html;
 }
 
 function pedidoCard(p){
@@ -631,14 +637,14 @@ function pedidoCard(p){
 async function responderPedido(rowIndex,nuevoStatus){
   setStatus('Guardando...','saving');
   try{
-    const range=`${SHEET_PEDIDOS}!E${rowIndex}`;
-    const res=await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW&key=${API_KEY}`,
-      {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[[nuevoStatus]]})});
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`HTTP ${res.status}`);}
+    await scriptCall({action:'status', row: rowIndex, status: nuevoStatus});
+    // Actualizar local inmediatamente
+    const p = pedidos.find(p=>p.rowIndex==rowIndex);
+    if(p) p.status = nuevoStatus;
     setStatus(`✓ ${ts()}`,'ok');
     showToast(nuevoStatus==='aprobado'?'✓ Pedido aprobado':'✕ Pedido rechazado');
-    await loadPedidos();
+    renderPedidos(); updateBadge();
+    setTimeout(()=>loadPedidos(), 3000);
   }catch(e){setStatus(`Error: ${e.message}`,'err');alert(`Error: ${e.message}`);}
 }
 
@@ -654,6 +660,18 @@ function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);
 }
+
+// ── SCRIPT CALL (bypass CORS via image) ──────────────────────────────────────
+function scriptCall(params) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const qs  = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    img.onload = img.onerror = () => resolve();
+    img.src = SCRIPT_URL + '?' + qs;
+    setTimeout(resolve, 4000);
+  });
+}
+
 function setStatus(msg,cls){const el=document.getElementById('status');el.textContent=msg;el.className=cls;}
 function ts(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 </script>
