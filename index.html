@@ -271,7 +271,7 @@
           <div id="empty-msg">No se encontraron productos.</div>
           <div class="card-footer">
             <div class="legend-item"><div class="legend-dot"></div><span>Fila roja = stock bajo en depósito</span></div>
-            <div style="margin-left:auto;font-size:11px;color:#9ca3af">Auto-actualización cada 30 seg</div>
+            <div style="margin-left:auto;font-size:11px;color:#9ca3af">Auto-actualización cada 10 seg</div>
           </div>
         </div>
       </div>
@@ -296,7 +296,6 @@
   <div class="page" id="page-pedidos">
     <div class="page-header">
       <h2>Pedidos</h2>
-      <button class="btn btn-ghost btn-sm" onclick="loadPedidos()">↻ Actualizar</button>
     </div>
     <div id="pedidos-list"><div class="no-pedidos">Cargando...</div></div>
   </div>
@@ -311,7 +310,7 @@ const API_KEY       = 'AIzaSyBVbMHGSriL8yGoF5eQQxE9QNe3WKt499U';
 const SHEET_STOCK   = 'WEB';
 const SHEET_PEDIDOS = 'Pedidos';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbzNggI2bgbc8B6euJTIh2bmYfxbljuE9tesq7S6joY5w0-4qyib8bD6S6gHDDyn9mtc/exec';
-const POLL_MS       = 30000;
+const POLL_MS       = 10000;
 
 const UMBRAL = {
   'Remaches': 20000, 'Discos Flap': 10, 'Discos de desvaste': 40,
@@ -546,7 +545,7 @@ async function enviarPedido() {
     setStatus(`✓ ${ts()}`, 'ok');
     showToast('✓ Pedido enviado');
     limpiarCarrito();
-    setTimeout(() => loadPedidos(), 2000);
+    setTimeout(() => loadPedidos(), 1000);
   } catch(e) {
     setStatus(`Error: ${e.message}`, 'err');
     document.getElementById('cart-send').disabled = false;
@@ -606,7 +605,7 @@ async function responderPedido(rowIndex, nuevoStatus) {
     setStatus(`✓ ${ts()}`, 'ok');
     showToast(nuevoStatus==='aprobado'?'✓ Pedido aprobado':'✕ Pedido rechazado');
     renderPedidos(); updateBadge();
-    setTimeout(() => loadPedidos(), 3000);
+    setTimeout(() => loadPedidos(), 1000);
   } catch(e) { setStatus(`Error: ${e.message}`,'err'); alert(`Error: ${e.message}`); }
 }
 
