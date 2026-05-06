@@ -103,6 +103,8 @@
   td:not(:first-child) { text-align: right; }
   .product-name { font-weight: 600; font-size: 13px; color: var(--navy); }
 
+  .num-display { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; color: var(--text); display: inline-block; min-width: 60px; text-align: right; }
+  .num-display.low { color: var(--red); font-weight: 700; }
   .num-input { width: 80px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; text-align: right; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); cursor: pointer; outline: none; transition: all 0.12s; -moz-appearance: textfield; }
   .num-input::-webkit-outer-spin-button, .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
   .num-input:hover  { border-color: var(--border); background: #f0f3f8; }
@@ -242,7 +244,6 @@
       </div>
     </div>
 
-    <div class="cat-filters" id="cat-filters" style="display:none"></div>
 
     <div class="layout">
       <div class="layout-main">
@@ -353,7 +354,7 @@ async function loadData() {
       pedido_fabrica: parseNum(r[3]),
       categoria: r[4]||'Sin categoría',
     }));
-    renderCats(); renderTable(); updateStats();
+    renderTable(); updateStats();
     setStatus(`✓ ${ts()}`, 'ok');
   } catch(e) { setStatus(`Error: ${e.message}`, 'err'); console.error(e); }
 }
@@ -385,21 +386,6 @@ function updateBadge() {
   b.textContent = n; b.classList.toggle('visible', n>0);
 }
 
-function renderCats() {
-  const cats = ['todas', ...new Set(rows.map(r=>r.categoria).filter(Boolean))];
-  const wrap = document.getElementById('cat-filters');
-  wrap.style.display = 'flex';
-  wrap.innerHTML = cats.map(c =>
-    `<button class="cat-btn${c===catActiva?' active':''}" onclick="setCat('${c}',this)">${c==='todas'?'Todas':c}</button>`
-  ).join('');
-}
-
-function setCat(cat, btn) {
-  catActiva = cat;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTable();
-}
 
 function renderTable() {
   const q = document.getElementById('search').value.toLowerCase();
@@ -460,9 +446,7 @@ function renderTable() {
 }
 
 function nInp(row, field, col, low) {
-  return `<input class="num-input${low?' low':''}" type="number" min="0" step="1"
-    value="${row[field]}" data-row="${row.rowIndex}" data-col="${col}" data-field="${field}"
-    onchange="onCellChange(this)">`;
+  return `<span class="num-display${low?' low':''}">${row[field].toLocaleString('es-AR')}</span>`;
 }
 
 function sortBy(col) {
