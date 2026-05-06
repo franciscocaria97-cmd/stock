@@ -394,7 +394,6 @@ function safeJSON(s){try{return JSON.parse(s);}catch{return[];}}
 // ── STATS ─────────────────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stats-row').style.display='grid';
-  document.getElementById('stat-total').textContent   = rows.length;
   document.getElementById('stat-alertas').textContent = rows.filter(r=>isLowDeposito(r.nombre, r.stock_deposito)).length;
 }
 
@@ -591,7 +590,7 @@ async function enviarPedido(){
     setStatus(`✓ ${ts()}`,'ok');
     showToast('✓ Pedido enviado a Francisco');
     limpiarCarrito();
-    document.getElementById('cart-nota').value='';
+    
 
     setTimeout(()=>loadPedidos(), 2000);
   } catch(e){
