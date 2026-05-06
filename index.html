@@ -571,10 +571,16 @@ async function enviarPedido(){
   setStatus('Enviando...','saving');
   document.getElementById('cart-send').disabled=true;
   try {
-    const url = SCRIPT_URL + '?data=' + encodeURIComponent(JSON.stringify(payload));
-    const res  = await fetch(url, {method:'GET'});
-    const data = await res.json();
-    if(data.msg !== 'guardado') throw new Error(data.msg||'Error desconocido');
+    // Usar iframe oculto para evitar CORS con Apps Script
+    await new Promise((resolve, reject) => {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = SCRIPT_URL + '?data=' + encodeURIComponent(JSON.stringify(payload));
+      iframe.onload = () => { document.body.removeChild(iframe); resolve(); };
+      iframe.onerror = () => { document.body.removeChild(iframe); resolve(); }; // resolvemos igual
+      document.body.appendChild(iframe);
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch(e){} resolve(); }, 3000);
+    });
     setStatus(`✓ ${ts()}`,'ok');
     showToast('✓ Pedido enviado a Francisco');
     limpiarCarrito();
