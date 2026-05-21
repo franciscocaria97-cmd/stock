@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock — Poster</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='13' cy='19' r='10' fill='%235a7a9a' opacity='0.55'/><circle cx='13' cy='19' r='6' fill='%231a3660'/><ellipse cx='20' cy='22' rx='7' ry='5' fill='%237aaa28'/><path d='M6 11 C6 4 14 1 20 5' stroke='%237a8fa8' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Barlow+Condensed:wght@500;700&display=swap');
+
+  :root {
+    --navy:      #1a3660;
+    --navy-dark: #0f2040;
+    --navy-mid:  #1e4080;
+    --olive:     #6d8c1f;
+    --olive-lt:  #85aa28;
+    --olive-pale:#f0f5e4;
+    --bg:        #e8eaee;
+    --surface:   #ffffff;
+    --border:    #c8cdd6;
+    --border-lt: #e2e5ea;
+    --text:      #1a2535;
+    --muted:     #6b7585;
+    --red:       #b92d20;
+    --red-bg:    #fef3f2;
+    --yellow:    #c97b10;
+    --yellow-bg: #fffbeb;
+    --green:     #166534;
+    --green-bg:  #f0fdf4;
+    --stripe:    #f5f7fa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar { background: #fff; border-top: 4px solid var(--olive-lt); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 66px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+  .logo-svg { height: 44px; width: auto; }
+  #status { font-size: 11px; color: var(--muted); font-weight: 600; }
+  #status.ok     { color: var(--olive); }
+  #status.err    { color: var(--red); }
+  #status.saving { color: var(--yellow); }
+
+  /* TABS */
+  .subbar { background: var(--navy); padding: 0 32px; display: flex; align-items: stretch; border-bottom: 2px solid rgba(255,255,255,0.05); }
+  .tab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.45); padding: 0 20px; height: 40px; display: flex; align-items: center; gap: 7px; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; user-select: none; }
+  .tab:hover { color: rgba(255,255,255,0.8); }
+  .tab.active { color: #fff; border-bottom-color: var(--olive-lt); }
+  .badge { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; display: none; }
+  .badge.visible { display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+
+  /* MAIN */
+  .main { max-width: 1060px; margin: 24px auto; padding: 0 20px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 18px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: #fde8e6; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--red); line-height: 1; font-family: 'Barlow Condensed', sans-serif; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* CARD */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 20px; }
+  .card-header { background: var(--navy); padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+  .card-footer { background: #f0f3f8; border-top: 1px solid var(--border); padding: 9px 16px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+
+  /* CAT FILTERS */
+  .cat-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cat-btn { font-family: 'Open Sans', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 13px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.12s; }
+  .cat-btn:hover { border-color: var(--navy); color: var(--navy); }
+  .cat-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* CAT ROW */
+  .cat-row td { background: var(--navy) !important; color: #fff !important; font-size: 10px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important; padding: 7px 16px !important; border: none !important; }
+  .cat-row:hover { background: var(--navy) !important; }
+  .cat-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--olive-lt); margin-right:7px; vertical-align:middle; }
+
+  /* SEARCH */
+  #search { font-family: 'Open Sans', sans-serif; font-size: 12px; padding: 6px 12px 6px 30px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 9px center; color: #fff; border-radius: 20px; outline: none; width: 210px; transition: all 0.2s; }
+  #search::placeholder { color: rgba(255,255,255,0.4); }
+  #search:focus { border-color: var(--olive-lt); width: 250px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #f0f3f8; border-bottom: 2px solid var(--border); }
+  th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--navy); white-space: nowrap; cursor: default; user-select: none; }
+  th:first-child { cursor: pointer; }
+  th:hover { background: #e8ecf4; }
+  th.sort-asc::after  { content:' ↑'; color:var(--olive); }
+  th.sort-desc::after { content:' ↓'; color:var(--olive); }
+  th:not(:first-child) { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--border-lt); transition: background 0.1s; }
+  tbody tr:not(.cat-row):nth-child(even) { background: var(--stripe); }
+  tbody tr:not(.cat-row):hover { background: #edf1f8 !important; }
+  tbody tr.alert-row { background: var(--red-bg) !important; border-left: 3px solid var(--red); }
+  tbody tr.alert-row:hover { background: #fde8e6 !important; }
+  td { padding: 10px 16px; vertical-align: middle; }
+  td:not(:first-child) { text-align: center; }
+  .product-name { font-weight: 600; font-size: 13px; color: var(--navy); }
+
+  .num-display { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; color: var(--text); display: block; text-align: center; }
+  .num-display.low { color: var(--red); font-weight: 700; }
+  .num-input { width: 80px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 500; text-align: right; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); cursor: pointer; outline: none; transition: all 0.12s; -moz-appearance: textfield; }
+  .num-input::-webkit-outer-spin-button, .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num-input:hover  { border-color: var(--border); background: #f0f3f8; }
+  .num-input:focus  { border-color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(26,54,96,0.1); cursor: text; }
+  .num-input.low    { color: var(--red); font-weight: 700; }
+  .num-input.saving { border-color: var(--yellow); color: var(--yellow); }
+  .num-input.saved  { border-color: var(--olive); color: var(--olive); }
+
+  .pedido-qty-wrap { display: inline-flex; align-items: center; gap: 5px; justify-content: flex-end; }
+  .pedido-qty { width: 56px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; text-align: center; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; background: #f8f9fb; outline: none; -moz-appearance: textfield; transition: all 0.12s; }
+  .pedido-qty::-webkit-outer-spin-button, .pedido-qty::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .pedido-qty:focus { border-color: var(--navy); background: #fff; }
+  .pedido-qty.en-carrito { border-color: var(--olive); background: var(--olive-pale); color: var(--olive); font-weight: 700; }
+  .btn-add { font-family: 'Open Sans', sans-serif; font-size: 11px; font-weight: 700; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.12s; background: var(--olive); color: #fff; white-space: nowrap; }
+  .btn-add:hover { background: var(--olive-lt); }
+  .btn-add.en-carrito { background: var(--navy); }
+
+  /* LAYOUT */
+  .layout { display: flex; gap: 18px; align-items: flex-start; }
+  .layout-main { flex: 1; min-width: 0; }
+
+  /* CARRITO */
+  .cart-panel { width: 270px; flex-shrink: 0; background: var(--surface); border: 2px solid var(--olive); border-radius: 8px; overflow: hidden; position: sticky; top: 20px; box-shadow: 0 4px 16px rgba(109,140,31,0.12); }
+  .cart-header { background: linear-gradient(90deg, var(--olive) 0%, var(--olive-lt) 100%); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .cart-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+  #cart-count { background: rgba(255,255,255,0.28); color: #fff; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; }
+  .cart-body { max-height: 300px; overflow-y: auto; }
+  .cart-empty { text-align: center; padding: 22px 16px; color: var(--muted); font-size: 12px; line-height: 1.5; font-style: italic; }
+  .cart-item { display: flex; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--border-lt); gap: 8px; }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item-name { flex: 1; font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.3; }
+  .cart-item-qty { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--olive); min-width: 28px; text-align: right; }
+  .cart-item-unit { font-size: 10px; color: var(--muted); }
+  .cart-item-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 3px; transition: all 0.1s; }
+  .cart-item-del:hover { color: var(--red); background: var(--red-bg); }
+  .cart-footer { padding: 12px 14px; border-top: 1px solid var(--border); background: #f8faf2; display: flex; flex-direction: column; gap: 6px; }
+  .cart-send { width: 100%; font-family: 'Open Sans', sans-serif; font-size: 13px; font-weight: 700; padding: 10px; background: var(--navy); color: #fff; border: none; border-radius: 5px; cursor: pointer; transition: background 0.12s; }
+  .cart-send:hover:not(:disabled) { background: var(--navy-dark); }
+  .cart-send:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cart-clear { width: 100%; font-family: 'Open Sans', sans-serif; font-size: 11px; font-weight: 600; padding: 6px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.12s; }
+  .cart-clear:hover { color: var(--red); border-color: var(--red); }
+
+  /* BUTTONS */
+  .btn { font-family:'Open Sans',sans-serif; font-size:12px; font-weight:700; padding:7px 16px; border:none; border-radius:4px; cursor:pointer; transition:all 0.12s; white-space:nowrap; }
+  .btn-primary { background:var(--navy); color:#fff; }
+  .btn-primary:hover { background:var(--navy-dark); }
+  .btn-red  { background:var(--red); color:#fff; }
+  .btn-red:hover { opacity:0.85; }
+  .btn-olive { background:var(--olive); color:#fff; }
+  .btn-olive:hover { background:var(--olive-lt); }
+  .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--navy); color:var(--navy); }
+  .btn-sm { font-size:11px; padding:4px 10px; }
+
+  /* PEDIDOS */
+  .page-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .page-header h2 { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; color:var(--navy); letter-spacing:1px; text-transform:uppercase; }
+  .pedidos-section-title { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--navy); padding:6px 0 10px; border-bottom:2px solid var(--border); margin-bottom:12px; }
+  .pedido-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; margin-bottom:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+  .pedido-head { padding:10px 16px; display:flex; align-items:center; justify-content:space-between; background:#f8f9fb; border-bottom:1px solid var(--border-lt); flex-wrap:wrap; gap:8px; }
+  .pedido-fecha { font-size:12px; font-weight:700; color:var(--navy); }
+  .p-status { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:3px 9px; border-radius:10px; }
+  .p-status.pendiente { background:var(--yellow-bg); color:var(--yellow); border:1px solid #fde68a; }
+  .p-status.aprobado  { background:var(--green-bg);  color:var(--green);  border:1px solid #bbf7d0; }
+  .p-status.rechazado { background:var(--red-bg);    color:var(--red);    border:1px solid #fecaca; }
+  .p-status.entregado  { background:#f0f5e4; color:var(--olive); border:1px solid #c3e08a; }
+  .pedido-items { padding:10px 16px; }
+  .p-item-row { display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--border-lt); }
+  .p-item-row:last-child { border-bottom:none; }
+  .p-item-qty { font-weight:700; color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-size:15px; }
+  .pedido-actions { padding:10px 16px; display:flex; gap:8px; justify-content:flex-end; }
+
+  /* BANNER OFFLINE */
+  #offline-banner { display:none; background:var(--yellow-bg); border-bottom:2px solid #fde68a; padding:8px 32px; font-size:12px; font-weight:600; color:var(--yellow); text-align:center; }
+  #offline-banner.show { display:block; }
+
+  /* Misc */
+  #loading { text-align:center; padding:52px; color:var(--muted); font-size:13px; }
+  #empty-msg { text-align:center; padding:40px; color:var(--muted); font-size:13px; display:none; }
+  .no-pedidos { text-align:center; padding:36px; color:var(--muted); font-size:13px; font-style:italic; }
+  .blink { animation:blink 1s step-end infinite; }
+  @keyframes blink { 50%{opacity:0} }
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--navy-dark); color:#fff; font-size:13px; font-weight:600; padding:12px 20px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.2); border-left:4px solid var(--olive-lt); transform:translateY(80px); opacity:0; transition:all 0.3s ease; z-index:200; pointer-events:none; max-width:320px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.warn { border-left-color: var(--yellow); }
+  .toast.err  { border-left-color: var(--red); }
+
+  @media (max-width:740px) {
+    .layout { flex-direction:column; }
+    .cart-panel { width:100%; position:static; margin-top:12px; }
+    .topbar { padding:0 16px; height:56px; }
+    .logo-svg { height:36px; }
+    .subbar { padding:0 12px; }
+    .tab { padding:0 12px; font-size:10px; }
+    .main { padding:0 10px; margin-top:16px; }
+    .card-header { padding:10px 12px; flex-direction:column; align-items:flex-start; }
+    #search { width:100%; }
+    th { padding:8px 8px; font-size:9px; }
+    td { padding:8px 8px; }
+    .num-input { width:60px; font-size:14px; }
+    .pedido-qty { width:44px; font-size:13px; }
+    .btn-add { font-size:10px; padding:4px 7px; }
+    .cat-filters { gap:4px; }
+    .cat-btn { font-size:10px; padding:3px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="offline-banner">⚠ Sin conexión — los pedidos se guardan localmente y se enviarán al reconectar.</div>
+
+<div class="topbar">
+  <svg class="logo-svg" viewBox="0 0 200 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 32 C6 15 18 4 34 4 C43 4 51 8 56 16" stroke="#8899aa" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="34" r="15" fill="#5577aa" opacity="0.45"/>
+    <circle cx="30" cy="34" r="9" fill="#1a3660"/>
+    <ellipse cx="41" cy="37" rx="13" ry="9" fill="#7aaa28"/>
+    <text x="60" y="42" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="#1a3660" letter-spacing="1.5">POSTER</text>
+  </svg>
+  <span id="status">Conectando...</span>
+</div>
+
+<div class="subbar">
+  <div class="tab active" onclick="showTab('stock')" id="tab-stock">📦 Stock</div>
+  <div class="tab" onclick="showTab('pedidos')" id="tab-pedidos">
+    🛒 Pedidos <span class="badge" id="badge">0</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STOCK -->
+  <div class="page active" id="page-stock">
+
+    <div class="stats-row" id="stats-row" style="display:none">
+      <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div>
+          <div class="stat-value" id="stat-alertas">—</div>
+          <div class="stat-label">Stock Bajo en Depósito</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="layout-main">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Stock de Productos</span>
+            <input type="search" id="search" placeholder="Buscar producto..." autocomplete="off" oninput="renderTable()">
+          </div>
+          <div id="loading">Cargando datos<span class="blink">...</span></div>
+          <table id="stock-table" style="display:none">
+            <thead>
+              <tr>
+                <th onclick="sortBy(0)" style="width:30%">Producto</th>
+                <th style="text-align:center">Stock Fábrica</th>
+                <th style="text-align:center">Stock Depósito</th>
+                <th style="text-align:center">Pedir</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty-msg">No se encontraron productos.</div>
+          <div class="card-footer">
+            <div class="legend-item"><div class="legend-dot"></div><span>Fila roja = stock bajo en depósito</span></div>
+            <div style="margin-left:auto;font-size:11px;color:#9ca3af">Auto-actualización cada 10 seg</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-panel">
+        <div class="cart-header">
+          <span class="cart-title">🛒 Mi Pedido</span>
+          <span id="cart-count">0</span>
+        </div>
+        <div class="cart-body" id="cart-body">
+          <div class="cart-empty">Agregá productos<br>desde la tabla.</div>
+        </div>
+        <div class="cart-footer">
+          <button class="cart-send" id="cart-send" onclick="enviarPedido()" disabled>✓ Enviar pedido</button>
+          <button class="cart-clear" onclick="limpiarCarrito()">Limpiar carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PEDIDOS -->
+  <div class="page" id="page-pedidos">
+    <div class="page-header">
+      <h2>Pedidos</h2>
+    </div>
+    <div id="pedidos-list"><div class="no-pedidos">Cargando...</div></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SHEET_ID      = '1JtMV0WcdC1iaRHY_YtKXDkq4OQglbKo7cnH9NnnwylI';
+const API_KEY       = 'AIzaSyBVbMHGSriL8yGoF5eQQxE9QNe3WKt499U';
+const SHEET_STOCK   = 'WEB';
+const SHEET_PEDIDOS = 'Pedidos';
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbxi4T18nxSuwxqzoq8ZgHsra9ZA5bqCDbz3QSwG1duV3XSR6KbH3ZExNtqwq5QpsZ2Rzw/exec';
+const POLL_MS       = 10000;
+
+const QUEUE_KEY     = 'poster_pedidos_queue';
+const DRAFT_KEY     = 'poster_pedido_draft';
+const CARRITO_KEY   = 'poster_carrito';
+
+// ─── UMBRALES ────────────────────────────────────────────────────────────────
+const UMBRAL = {
+  'Remaches': 20000, 'Discos Flap': 10, 'Discos de desvaste': 40,
+  'Disco de corte': 100, 'Electrodo': 10, 'Arandelas': 50000,
+  'Cinta papel': 10, 'Ciano': 5, 'Mechas': 20, 'Alamabre': 50,
+  'Bolsas': 100, 'Thinner': 10, 'Diluyente': 5, 'Pintura': 20,
+  'Aguarras': 2, 'Estopa': 2,
+};
+
+function isLow(nombre, val) { const u = UMBRAL[nombre]; return u !== undefined && val < u; }
+
+function parseNum(v) {
+  const s = String(v || '0').trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  return parseInt(s.replace(/\./g,'')) || 0;
+}
+
+// ─── ESTADO ──────────────────────────────────────────────────────────────────
+let rows = [], pedidos = [];
+let sortCol = -1, sortDir = 1, saving = new Set(), catActiva = 'todas', pollTimer = null;
+
+// Carrito persiste en localStorage
+let carrito = {};
+function loadCarrito()  { try { carrito = JSON.parse(localStorage.getItem(CARRITO_KEY)||'{}'); } catch { carrito = {}; } }
+function persistCarrito(){ try { localStorage.setItem(CARRITO_KEY, JSON.stringify(carrito)); } catch {} }
+
+// ─── COLA OFFLINE ────────────────────────────────────────────────────────────
+function getQueue()     { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch { return []; } }
+function saveQueue(q)   { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch {} }
+
+async function flushQueue() {
+  const queue = getQueue();
+  if (!queue.length) return;
+  const failed = [];
+  for (const item of queue) {
+    try {
+      await scriptCallReal(item.params, 2);
+    } catch {
+      failed.push(item);
+    }
+  }
+  saveQueue(failed);
+  if (failed.length === 0) {
+    showToast('✓ Pedidos pendientes sincronizados');
+    setTimeout(() => loadPedidos(), 800);
+  }
+}
+
+// ─── CONEXIÓN ────────────────────────────────────────────────────────────────
+function updateOnlineStatus() {
+  const offline = !navigator.onLine;
+  document.getElementById('offline-banner').classList.toggle('show', offline);
+  if (!offline) flushQueue();
+}
+window.addEventListener('online',  updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ─── FETCH REAL con reintentos, backoff y verificación JSON ──────────────────
+async function scriptCallReal(params, retries) {
+  retries = (retries !== undefined) ? retries : 3;
+  const qs  = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
+  const url = SCRIPT_URL + '?' + qs;
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 15000);
+      const res  = await fetch(url, { method:'GET', signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      // Leer respuesta JSON y verificar ok:true
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); } catch { json = null; }
+
+      // Si el script devuelve { ok: false } es un error de negocio
+      if (json && json.ok === false) throw new Error(json.error || 'Error en el servidor');
+
+      return json; // éxito
+    } catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise(r => setTimeout(r, 1200 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+// scriptCall público: encola si falla definitivamente
+async function scriptCall(params) {
+  try {
+    await scriptCallReal(params, 3);
+  } catch (e) {
+    const queue = getQueue();
+    queue.push({ params, ts: Date.now() });
+    saveQueue(queue);
+    throw e;
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  loadCarrito();
+  restoreDraftIfNeeded();
+  updateOnlineStatus();
+  loadData();
+  loadPedidos();
+  startPolling();
+  renderCart();
+};
+
+function restoreDraftIfNeeded() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const { payload, ts: savedAt } = JSON.parse(raw);
+    // Solo restaurar si tiene menos de 1 hora
+    if (Date.now() - savedAt > 3600000) { localStorage.removeItem(DRAFT_KEY); return; }
+    // Si el carrito ya tiene items, no sobreescribir
+    if (Object.keys(carrito).length > 0) return;
+    (payload.items || []).forEach(i => { carrito[i.nombre] = i.cantidad; });
+    persistCarrito();
+    showToast('⚠ Pedido anterior sin confirmar restaurado', 'warn');
+  } catch {}
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('page-'+t).classList.add('active');
+  if (t === 'pedidos') loadPedidos();
+}
+
+// ─── CARGA STOCK ─────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_STOCK}!A2:E?key=${API_KEY}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    rows = (data.values||[]).map((r,i) => ({
+      rowIndex: i+2, nombre: r[0]||'',
+      stock_fabrica:  parseNum(r[1]),
+      stock_deposito: parseNum(r[2]),
+      pedido_fabrica: parseNum(r[3]),
+      categoria: r[4]||'Sin categoría',
+    }));
+    renderTable(); updateStats();
+    setStatus('✓ ' + ts(), 'ok');
+  } catch(e) { setStatus('Error: ' + e.message, 'err'); console.error(e); }
+}
+
+// ─── CARGA PEDIDOS ───────────────────────────────────────────────────────────
+async function loadPedidos() {
+  try {
+    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_PEDIDOS}!A2:G?key=${API_KEY}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    pedidos = (data.values||[]).map((r,i) => ({
+      rowIndex:i+2, id:r[0]||'', fecha:r[1]||'', nota:r[2]||'',
+      items:safeJSON(r[3]), status:r[4]||'pendiente', quien:r[5]||'Alejandro', fecha_entrega:r[6]||'',
+    }));
+    renderPedidos(); updateBadge();
+  } catch(e) { console.warn('loadPedidos:', e.message); }
+}
+
+function safeJSON(s) { try { return JSON.parse(s); } catch { return []; } }
+
+// ─── STATS / BADGE ───────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stats-row').style.display = 'grid';
+  document.getElementById('stat-alertas').textContent = rows.filter(r=>isLow(r.nombre, r.stock_deposito)).length;
+}
+
+function updateBadge() {
+  const n = pedidos.filter(p=>p.status==='pendiente').length;
+  const b = document.getElementById('badge');
+  b.textContent = n; b.classList.toggle('visible', n>0);
+}
+
+// ─── TABLA ───────────────────────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  let vis = rows.filter(r => r.nombre.toLowerCase().includes(q) && (catActiva==='todas' || r.categoria===catActiva));
+
+  if (sortCol >= 0) {
+    const fields = ['nombre','stock_fabrica','stock_deposito'];
+    vis = [...vis].sort((a,b) => {
+      const f  = fields[sortCol]||'nombre';
+      const av = typeof a[f]==='number' ? a[f] : a[f].toLowerCase();
+      const bv = typeof b[f]==='number' ? b[f] : b[f].toLowerCase();
+      return av<bv ? -sortDir : av>bv ? sortDir : 0;
+    });
+  }
+
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  document.getElementById('loading').style.display     = 'none';
+  document.getElementById('stock-table').style.display = vis.length ? 'table' : 'none';
+  document.getElementById('empty-msg').style.display   = vis.length ? 'none' : 'block';
+
+  const grupos = {};
+  vis.forEach(r => { const c = r.categoria||'Sin categoría'; if(!grupos[c]) grupos[c]=[]; grupos[c].push(r); });
+  const headers = catActiva==='todas' && !q;
+
+  Object.entries(grupos).forEach(([cat, items]) => {
+    if (headers) {
+      const cr = document.createElement('tr');
+      cr.classList.add('cat-row');
+      cr.innerHTML = '<td colspan="4"><span class="cat-pill">'+cat+'</span></td>';
+      tb.appendChild(cr);
+    }
+    items.forEach(row => {
+      const lD = isLow(row.nombre, row.stock_deposito);
+      const tr = document.createElement('tr');
+      if (lD) tr.classList.add('alert-row');
+      tr.dataset.row = row.rowIndex;
+      const enC = (carrito[row.nombre] || 0) > 0;
+      // Escapamos comillas en el nombre para el onclick
+      const nombreEsc = row.nombre.replace(/'/g, "\\'");
+      tr.innerHTML =
+        '<td><span class="product-name">'+row.nombre+'</span></td>' +
+        '<td><span class="num-display">'+row.stock_fabrica.toLocaleString('es-AR')+'</span></td>' +
+        '<td><span class="num-display'+(lD?' low':'')+'">'+row.stock_deposito.toLocaleString('es-AR')+'</span></td>' +
+        '<td style="text-align:center">' +
+          '<div class="pedido-qty-wrap">' +
+            '<input type="number" min="0" step="1"' +
+              ' class="pedido-qty'+(enC?' en-carrito':'')+'"' +
+              ' placeholder="0" value="'+(carrito[row.nombre]||'')+'"' +
+              ' data-nombre="'+row.nombre+'">' +
+            '<button class="btn-add'+(enC?' en-carrito':'')+'"' +
+              ' onclick="addToCarrito(\''+nombreEsc+'\',this)">' +
+              (enC?'✓ Listo':'+ Agregar') +
+            '</button>' +
+          '</div>' +
+        '</td>';
+      tb.appendChild(tr);
+    });
+  });
+}
+
+function sortBy(col) {
+  if (sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; }
+  document.querySelectorAll('th').forEach((th,i) => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (i===col) th.classList.add(sortDir===1?'sort-asc':'sort-desc');
+  });
+  renderTable();
+}
+
+// ─── CARRITO ─────────────────────────────────────────────────────────────────
+function addToCarrito(nombre, btn) {
+  const tr  = btn.closest('tr');
+  const inp = tr ? tr.querySelector('.pedido-qty') : null;
+  const qty = parseInt(inp && inp.value) || 1;
+  if (qty <= 0) { showToast('Ingresá una cantidad mayor a 0', 'warn'); return; }
+  carrito[nombre] = qty;
+  persistCarrito();
+  renderCart(); renderTable();
+  showToast('✓ ' + nombre + ' agregado');
+}
+
+function renderCart() {
+  const nombres = Object.keys(carrito).filter(k => carrito[k] > 0);
+  document.getElementById('cart-count').textContent = nombres.length;
+  document.getElementById('cart-send').disabled = !nombres.length;
+  const body = document.getElementById('cart-body');
+  if (!nombres.length) {
+    body.innerHTML = '<div class="cart-empty">Agregá productos<br>desde la tabla.</div>';
+    return;
+  }
+  body.innerHTML = nombres.map(n =>
+    '<div class="cart-item">' +
+      '<span class="cart-item-name">'+n+'</span>' +
+      '<span class="cart-item-qty">'+carrito[n]+'</span>' +
+      '<span class="cart-item-unit">u.</span>' +
+      '<button class="cart-item-del" onclick="quitarItem(\''+n.replace(/'/g,"\\'")+'\''+')" title="Quitar">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function quitarItem(nombre) {
+  delete carrito[nombre];
+  persistCarrito();
+  const inp = document.querySelector('.pedido-qty[data-nombre="'+nombre+'"]');
+  if (inp) inp.value = '';
+  renderCart(); renderTable();
+}
+
+function limpiarCarrito() {
+  carrito = {};
+  persistCarrito();
+  document.querySelectorAll('.pedido-qty').forEach(i => i.value = '');
+  renderCart(); renderTable();
+}
+
+// ─── ENVIAR PEDIDO ───────────────────────────────────────────────────────────
+async function enviarPedido() {
+  const items = Object.entries(carrito)
+    .filter(([,v]) => v > 0)
+    .map(([nombre,cantidad]) => ({ nombre, cantidad }));
+  if (!items.length) { showToast('El pedido está vacío', 'warn'); return; }
+
+  const payload = {
+    id:    'P-' + Date.now(),
+    fecha: new Date().toLocaleString('es-AR'),
+    nota:  '',
+    items,
+    quien: 'Alejandro',
+  };
+
+  // Guardar draft ANTES de enviar — sobrevive refresh/cierre de pestaña
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ payload, ts: Date.now() })); } catch {}
+
+  setStatus('Enviando...', 'saving');
+  const btn = document.getElementById('cart-send');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    await scriptCall({ action: 'pedido', data: JSON.stringify(payload) });
+
+    // Éxito confirmado
+    localStorage.removeItem(DRAFT_KEY);
+    setStatus('✓ ' + ts(), 'ok');
+    showToast('✓ Pedido enviado y confirmado');
+    limpiarCarrito();
+    btn.textContent = '✓ Enviar pedido';
+    setTimeout(() => loadPedidos(), 900);
+
+  } catch (e) {
+    // Fallo — el pedido ya está en la cola offline
+    setStatus('⚠ Sin conexión — pedido guardado localmente', 'saving');
+    btn.disabled = false;
+    btn.textContent = '✓ Enviar pedido';
+    showToast('⚠ Sin conexión. Se enviará al reconectar.', 'warn');
+    console.error('[enviarPedido]', e);
+    // No limpiar el carrito: el usuario puede reintentar
+  }
+}
+
+// ─── PEDIDOS LIST ────────────────────────────────────────────────────────────
+function renderPedidos() {
+  const pendientes = pedidos.filter(p => p.status === 'pendiente');
+  const historial  = [...pedidos.filter(p => p.status !== 'pendiente')].reverse();
+  let html = '';
+  if (pendientes.length) {
+    html += '<div class="pedidos-section-title">⏳ Pendientes</div>';
+    html += pendientes.map(p => pedidoCard(p)).join('');
+  }
+  if (historial.length) {
+    html += '<div class="pedidos-section-title" style="margin-top:20px">📋 Historial</div>';
+    html += historial.map(p => pedidoCard(p)).join('');
+  }
+  if (!html) html = '<div class="no-pedidos">No hay pedidos aún.</div>';
+  document.getElementById('pedidos-list').innerHTML = html;
+}
+
+function pedidoCard(p) {
+  const itemsHtml = (p.items||[]).map(i =>
+    '<div class="p-item-row">' +
+      '<span>'+i.nombre+'</span>' +
+      '<span class="p-item-qty">'+i.cantidad+' u.</span>' +
+    '</div>'
+  ).join('');
+
+  let actions = '';
+  if (p.status === 'pendiente') {
+    actions =
+      '<div class="pedido-actions">' +
+        '<button class="btn btn-red btn-sm" onclick="responderPedido('+p.rowIndex+',\'rechazado\')">✕ Rechazar</button>' +
+        '<button class="btn btn-primary btn-sm" onclick="responderPedido('+p.rowIndex+',\'aprobado\')">✓ Aprobar</button>' +
+      '</div>';
+  } else if (p.status === 'aprobado') {
+    actions =
+      '<div class="pedido-actions">' +
+        '<button class="btn btn-olive btn-sm" onclick="responderPedido('+p.rowIndex+',\'entregado\')">📦 Marcar como entregado</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="borrarPedido('+p.rowIndex+')" style="margin-left:6px">🗑 Borrar</button>' +
+      '</div>';
+  } else {
+    actions =
+      '<div class="pedido-actions">' +
+        '<button class="btn btn-ghost btn-sm" onclick="borrarPedido('+p.rowIndex+')">🗑 Borrar</button>' +
+      '</div>';
+  }
+
+  const entregado = (p.status === 'entregado' && p.fecha_entrega)
+    ? '<div style="padding:6px 16px 10px;font-size:11px;color:var(--muted)">📦 Entregado: '+p.fecha_entrega+'</div>'
+    : '';
+
+  return (
+    '<div class="pedido-card">' +
+      '<div class="pedido-head">' +
+        '<span class="pedido-fecha">'+p.fecha+'</span>' +
+        '<span class="p-status '+p.status+'">'+p.status+'</span>' +
+      '</div>' +
+      '<div class="pedido-items">'+itemsHtml+'</div>' +
+      actions + entregado +
+    '</div>'
+  );
+}
+
+async function borrarPedido(rowIndex) {
+  if (!confirm('¿Borrar este pedido del historial?')) return;
+  setStatus('Borrando...', 'saving');
+  try {
+    await scriptCall({ action: 'borrar', row: rowIndex });
+    pedidos = pedidos.filter(p => p.rowIndex != rowIndex);
+    setStatus('✓ ' + ts(), 'ok');
+    showToast('🗑 Pedido borrado');
+    renderPedidos(); updateBadge();
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'err');
+    showToast('Error al borrar: ' + e.message, 'err');
+  }
+}
+
+async function responderPedido(rowIndex, nuevoStatus) {
+  setStatus('Guardando...', 'saving');
+  try {
+    const fechaEntrega = nuevoStatus === 'entregado' ? new Date().toLocaleString('es-AR') : '';
+    await scriptCall({ action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega });
+    const p = pedidos.find(p => p.rowIndex == rowIndex);
+    if (p) p.status = nuevoStatus;
+    setStatus('✓ ' + ts(), 'ok');
+    const msg = nuevoStatus === 'aprobado' ? '✓ Pedido aprobado' :
+                nuevoStatus === 'rechazado' ? '✕ Pedido rechazado' : '📦 Marcado como entregado';
+    showToast(msg);
+    renderPedidos(); updateBadge();
+    setTimeout(() => loadPedidos(), 900);
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'err');
+    showToast('Error al guardar: ' + e.message, 'err');
+  }
+}
+
+// ─── POLLING ─────────────────────────────────────────────────────────────────
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    if (saving.size === 0 && navigator.onLine) { loadData(); loadPedidos(); }
+  }, POLL_MS);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+let toastT = null;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = cls || '';
+}
+
+function ts() {
+  return new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+</script>
+</body>
+</html>
