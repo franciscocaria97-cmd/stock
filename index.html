@@ -354,7 +354,7 @@ function persistCarrito(){ try { localStorage.setItem(CARRITO_KEY, JSON.stringif
 // isLow usa el umbral del propio row, que viene de la hoja
 function isLow(row) {
   if (row.umbral === null || row.umbral === undefined) return false;
-  return row.stock_deposito < row.umbral;
+  return (row.stock_fabrica + row.stock_deposito) < row.umbral;
 }
 
 function parseNum(v) {
