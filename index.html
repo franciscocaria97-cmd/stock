@@ -178,6 +178,17 @@
   .p-item-qty { font-weight:700; color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-size:15px; }
   .pedido-actions { padding:10px 16px; display:flex; gap:8px; justify-content:flex-end; }
 
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:300; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:#fff; border-radius:8px; padding:28px 28px 20px; max-width:380px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+  .modal-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:var(--navy); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; }
+  .modal-body { font-size:13px; color:var(--text); line-height:1.6; margin-bottom:20px; }
+  .modal-body .stock-check { margin-top:12px; background:var(--red-bg); border:1px solid #fecaca; border-radius:5px; padding:10px 12px; }
+  .modal-body .stock-check .item-faltante { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+  .modal-body .stock-check .item-faltante span:last-child { font-weight:700; color:var(--red); }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+
   /* BANNER OFFLINE */
   #offline-banner { display:none; background:var(--yellow-bg); border-bottom:2px solid #fde68a; padding:8px 32px; font-size:12px; font-weight:600; color:var(--yellow); text-align:center; }
   #offline-banner.show { display:block; }
@@ -303,6 +314,17 @@
 
 </div>
 
+<!-- MODAL STOCK INSUFICIENTE -->
+<div class="modal-overlay" id="modal-stock" onclick="cerrarModalStock(event)">
+  <div class="modal-box">
+    <div class="modal-title">⚠ Stock insuficiente</div>
+    <div class="modal-body" id="modal-stock-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModalStockBtn()">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -314,50 +336,45 @@ const SHEET_PEDIDOS = 'Pedidos';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbxi4T18nxSuwxqzoq8ZgHsra9ZA5bqCDbz3QSwG1duV3XSR6KbH3ZExNtqwq5QpsZ2Rzw/exec';
 const POLL_MS       = 10000;
 
-const QUEUE_KEY     = 'poster_pedidos_queue';
-const DRAFT_KEY     = 'poster_pedido_draft';
-const CARRITO_KEY   = 'poster_carrito';
-
-// ─── UMBRALES ────────────────────────────────────────────────────────────────
-const UMBRAL = {
-  'Remaches': 20000, 'Discos Flap': 10, 'Discos de desvaste': 40,
-  'Disco de corte': 100, 'Electrodo': 10, 'Arandelas': 50000,
-  'Cinta papel': 10, 'Ciano': 5, 'Mechas': 20, 'Alamabre': 50,
-  'Bolsas': 100, 'Thinner': 10, 'Diluyente': 5, 'Pintura': 20,
-  'Aguarras': 2, 'Estopa': 2,
-};
-
-function isLow(nombre, val) { const u = UMBRAL[nombre]; return u !== undefined && val < u; }
-
-function parseNum(v) {
-  const s = String(v || '0').trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
-  return parseInt(s.replace(/\./g,'')) || 0;
-}
+const QUEUE_KEY   = 'poster_pedidos_queue';
+const DRAFT_KEY   = 'poster_pedido_draft';
+const CARRITO_KEY = 'poster_carrito';
 
 // ─── ESTADO ──────────────────────────────────────────────────────────────────
+// rows ahora incluye umbral leído desde col G de la hoja
 let rows = [], pedidos = [];
 let sortCol = -1, sortDir = 1, saving = new Set(), catActiva = 'todas', pollTimer = null;
 
 // Carrito persiste en localStorage
 let carrito = {};
-function loadCarrito()  { try { carrito = JSON.parse(localStorage.getItem(CARRITO_KEY)||'{}'); } catch { carrito = {}; } }
+function loadCarrito()   { try { carrito = JSON.parse(localStorage.getItem(CARRITO_KEY)||'{}'); } catch { carrito = {}; } }
 function persistCarrito(){ try { localStorage.setItem(CARRITO_KEY, JSON.stringify(carrito)); } catch {} }
 
+// ─── UMBRAL (leído de la hoja, col G) ────────────────────────────────────────
+// isLow usa el umbral del propio row, que viene de la hoja
+function isLow(row) {
+  if (row.umbral === null || row.umbral === undefined) return false;
+  return row.stock_deposito < row.umbral;
+}
+
+function parseNum(v) {
+  const s = String(v || '0').trim();
+  if (!s || s === '-') return 0;
+  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  return parseInt(s.replace(/\./g,'')) || 0;
+}
+
 // ─── COLA OFFLINE ────────────────────────────────────────────────────────────
-function getQueue()     { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch { return []; } }
-function saveQueue(q)   { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch {} }
+function getQueue()   { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch { return []; } }
+function saveQueue(q) { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch {} }
 
 async function flushQueue() {
   const queue = getQueue();
   if (!queue.length) return;
   const failed = [];
   for (const item of queue) {
-    try {
-      await scriptCallReal(item.params, 2);
-    } catch {
-      failed.push(item);
-    }
+    try { await scriptCallReal(item.params, 2); }
+    catch { failed.push(item); }
   }
   saveQueue(failed);
   if (failed.length === 0) {
@@ -366,7 +383,7 @@ async function flushQueue() {
   }
 }
 
-// ─── CONEXIÓN ────────────────────────────────────────────────────────────────
+// ─── CONEXIÓN ─────────────────────────────────────────────────────────────────
 function updateOnlineStatus() {
   const offline = !navigator.onLine;
   document.getElementById('offline-banner').classList.toggle('show', offline);
@@ -375,7 +392,7 @@ function updateOnlineStatus() {
 window.addEventListener('online',  updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
-// ─── FETCH REAL con reintentos, backoff y verificación JSON ──────────────────
+// ─── FETCH REAL con reintentos ────────────────────────────────────────────────
 async function scriptCallReal(params, retries) {
   retries = (retries !== undefined) ? retries : 3;
   const qs  = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
@@ -388,16 +405,11 @@ async function scriptCallReal(params, retries) {
       const res  = await fetch(url, { method:'GET', signal: ctrl.signal });
       clearTimeout(tid);
       if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      // Leer respuesta JSON y verificar ok:true
       const text = await res.text();
       let json;
       try { json = JSON.parse(text); } catch { json = null; }
-
-      // Si el script devuelve { ok: false } es un error de negocio
       if (json && json.ok === false) throw new Error(json.error || 'Error en el servidor');
-
-      return json; // éxito
+      return json;
     } catch (e) {
       lastErr = e;
       if (i < retries) await new Promise(r => setTimeout(r, 1200 * (i + 1)));
@@ -406,10 +418,9 @@ async function scriptCallReal(params, retries) {
   throw lastErr;
 }
 
-// scriptCall público: encola si falla definitivamente
 async function scriptCall(params) {
   try {
-    await scriptCallReal(params, 3);
+    return await scriptCallReal(params, 3);
   } catch (e) {
     const queue = getQueue();
     queue.push({ params, ts: Date.now() });
@@ -434,9 +445,7 @@ function restoreDraftIfNeeded() {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     const { payload, ts: savedAt } = JSON.parse(raw);
-    // Solo restaurar si tiene menos de 1 hora
     if (Date.now() - savedAt > 3600000) { localStorage.removeItem(DRAFT_KEY); return; }
-    // Si el carrito ya tiene items, no sobreescribir
     if (Object.keys(carrito).length > 0) return;
     (payload.items || []).forEach(i => { carrito[i.nombre] = i.cantidad; });
     persistCarrito();
@@ -454,25 +463,29 @@ function showTab(t) {
 }
 
 // ─── CARGA STOCK ─────────────────────────────────────────────────────────────
+// Lee A:G (columna G = umbral) en lugar de A:E
 async function loadData() {
   try {
-    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_STOCK}!A2:E?key=${API_KEY}`);
+    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_STOCK}!A2:G?key=${API_KEY}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     rows = (data.values||[]).map((r,i) => ({
-      rowIndex: i+2, nombre: r[0]||'',
+      rowIndex:       i + 2,
+      nombre:         r[0] || '',
       stock_fabrica:  parseNum(r[1]),
       stock_deposito: parseNum(r[2]),
       pedido_fabrica: parseNum(r[3]),
-      categoria: r[4]||'Sin categoría',
+      categoria:      r[4] || 'Sin categoría',
+      // col E = índice 4, col F = índice 5, col G = índice 6
+      umbral:         r[6] !== undefined && r[6] !== '' ? parseNum(r[6]) : null,
     }));
     renderTable(); updateStats();
     setStatus('✓ ' + ts(), 'ok');
   } catch(e) { setStatus('Error: ' + e.message, 'err'); console.error(e); }
 }
 
-// ─── CARGA PEDIDOS ───────────────────────────────────────────────────────────
+// ─── CARGA PEDIDOS ────────────────────────────────────────────────────────────
 async function loadPedidos() {
   try {
     const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_PEDIDOS}!A2:G?key=${API_KEY}`);
@@ -492,7 +505,7 @@ function safeJSON(s) { try { return JSON.parse(s); } catch { return []; } }
 // ─── STATS / BADGE ───────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stats-row').style.display = 'grid';
-  document.getElementById('stat-alertas').textContent = rows.filter(r=>isLow(r.nombre, r.stock_deposito)).length;
+  document.getElementById('stat-alertas').textContent = rows.filter(r => isLow(r)).length;
 }
 
 function updateBadge() {
@@ -534,13 +547,12 @@ function renderTable() {
       tb.appendChild(cr);
     }
     items.forEach(row => {
-      const lD = isLow(row.nombre, row.stock_deposito);
+      const lD = isLow(row);
       const tr = document.createElement('tr');
       if (lD) tr.classList.add('alert-row');
       tr.dataset.row = row.rowIndex;
-      const enC = (carrito[row.nombre] || 0) > 0;
-      // Escapamos comillas en el nombre para el onclick
       const nombreEsc = row.nombre.replace(/'/g, "\\'");
+      const enC = (carrito[row.nombre] || 0) > 0;
       tr.innerHTML =
         '<td><span class="product-name">'+row.nombre+'</span></td>' +
         '<td><span class="num-display">'+row.stock_fabrica.toLocaleString('es-AR')+'</span></td>' +
@@ -617,7 +629,7 @@ function limpiarCarrito() {
   renderCart(); renderTable();
 }
 
-// ─── ENVIAR PEDIDO ───────────────────────────────────────────────────────────
+// ─── ENVIAR PEDIDO ────────────────────────────────────────────────────────────
 async function enviarPedido() {
   const items = Object.entries(carrito)
     .filter(([,v]) => v > 0)
@@ -632,7 +644,6 @@ async function enviarPedido() {
     quien: 'Alejandro',
   };
 
-  // Guardar draft ANTES de enviar — sobrevive refresh/cierre de pestaña
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ payload, ts: Date.now() })); } catch {}
 
   setStatus('Enviando...', 'saving');
@@ -642,27 +653,45 @@ async function enviarPedido() {
 
   try {
     await scriptCall({ action: 'pedido', data: JSON.stringify(payload) });
-
-    // Éxito confirmado
     localStorage.removeItem(DRAFT_KEY);
     setStatus('✓ ' + ts(), 'ok');
     showToast('✓ Pedido enviado y confirmado');
     limpiarCarrito();
     btn.textContent = '✓ Enviar pedido';
     setTimeout(() => loadPedidos(), 900);
-
   } catch (e) {
-    // Fallo — el pedido ya está en la cola offline
     setStatus('⚠ Sin conexión — pedido guardado localmente', 'saving');
     btn.disabled = false;
     btn.textContent = '✓ Enviar pedido';
     showToast('⚠ Sin conexión. Se enviará al reconectar.', 'warn');
     console.error('[enviarPedido]', e);
-    // No limpiar el carrito: el usuario puede reintentar
   }
 }
 
-// ─── PEDIDOS LIST ────────────────────────────────────────────────────────────
+// ─── MODAL STOCK INSUFICIENTE ─────────────────────────────────────────────────
+function mostrarModalStockInsuficiente(faltantes) {
+  const filas = faltantes.map(f =>
+    '<div class="item-faltante">' +
+      '<span>'+f.nombre+'</span>' +
+      '<span>Pedido: '+f.pedido+' — Depósito: '+f.deposito+' (faltan '+f.falta+')</span>' +
+    '</div>'
+  ).join('');
+  document.getElementById('modal-stock-body').innerHTML =
+    'No hay suficiente stock en depósito para entregar este pedido. ' +
+    'Comprá el stock faltante antes de marcarlo como entregado.' +
+    '<div class="stock-check">'+filas+'</div>';
+  document.getElementById('modal-stock').classList.add('show');
+}
+
+function cerrarModalStockBtn() {
+  document.getElementById('modal-stock').classList.remove('show');
+}
+
+function cerrarModalStock(event) {
+  if (event.target === document.getElementById('modal-stock')) cerrarModalStockBtn();
+}
+
+// ─── PEDIDOS LIST ─────────────────────────────────────────────────────────────
 function renderPedidos() {
   const pendientes = pedidos.filter(p => p.status === 'pendiente');
   const historial  = [...pedidos.filter(p => p.status !== 'pendiente')].reverse();
@@ -697,7 +726,7 @@ function pedidoCard(p) {
   } else if (p.status === 'aprobado') {
     actions =
       '<div class="pedido-actions">' +
-        '<button class="btn btn-olive btn-sm" onclick="responderPedido('+p.rowIndex+',\'entregado\')">📦 Marcar como entregado</button>' +
+        '<button class="btn btn-olive btn-sm" onclick="intentarEntregar('+p.rowIndex+')">📦 Marcar como entregado</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="borrarPedido('+p.rowIndex+')" style="margin-left:6px">🗑 Borrar</button>' +
       '</div>';
   } else {
@@ -723,6 +752,37 @@ function pedidoCard(p) {
   );
 }
 
+// ─── ENTREGAR PEDIDO (con verificación de stock) ──────────────────────────────
+function intentarEntregar(rowIndex) {
+  const pedido = pedidos.find(p => p.rowIndex == rowIndex);
+  if (!pedido) return;
+
+  // Verificar stock depósito para cada ítem del pedido
+  const faltantes = [];
+  (pedido.items || []).forEach(item => {
+    const row = rows.find(r => r.nombre === item.nombre);
+    const stockDeposito = row ? row.stock_deposito : 0;
+    if (stockDeposito < item.cantidad) {
+      faltantes.push({
+        nombre:   item.nombre,
+        pedido:   item.cantidad,
+        deposito: stockDeposito,
+        falta:    item.cantidad - stockDeposito,
+      });
+    }
+  });
+
+  if (faltantes.length > 0) {
+    // Hay stock insuficiente → mostrar modal, bloquear entrega
+    mostrarModalStockInsuficiente(faltantes);
+    return;
+  }
+
+  // Stock suficiente → confirmar y ejecutar
+  if (!confirm('¿Confirmar entrega? Se descontará del depósito y se sumará a fábrica.')) return;
+  responderPedido(rowIndex, 'entregado');
+}
+
 async function borrarPedido(rowIndex) {
   if (!confirm('¿Borrar este pedido del historial?')) return;
   setStatus('Borrando...', 'saving');
@@ -742,22 +802,33 @@ async function responderPedido(rowIndex, nuevoStatus) {
   setStatus('Guardando...', 'saving');
   try {
     const fechaEntrega = nuevoStatus === 'entregado' ? new Date().toLocaleString('es-AR') : '';
-    await scriptCall({ action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega });
+
+    // Si es entrega, pasar los ítems del pedido para que el script mueva el stock
+    let params = { action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega };
+    if (nuevoStatus === 'entregado') {
+      const pedido = pedidos.find(p => p.rowIndex == rowIndex);
+      if (pedido) params.items = JSON.stringify(pedido.items || []);
+    }
+
+    await scriptCall(params);
+
     const p = pedidos.find(p => p.rowIndex == rowIndex);
-    if (p) p.status = nuevoStatus;
+    if (p) { p.status = nuevoStatus; if (fechaEntrega) p.fecha_entrega = fechaEntrega; }
     setStatus('✓ ' + ts(), 'ok');
-    const msg = nuevoStatus === 'aprobado' ? '✓ Pedido aprobado' :
-                nuevoStatus === 'rechazado' ? '✕ Pedido rechazado' : '📦 Marcado como entregado';
+    const msg = nuevoStatus === 'aprobado'  ? '✓ Pedido aprobado' :
+                nuevoStatus === 'rechazado' ? '✕ Pedido rechazado' :
+                                              '📦 Entregado — stock actualizado';
     showToast(msg);
     renderPedidos(); updateBadge();
-    setTimeout(() => loadPedidos(), 900);
+    // Recargar stock para reflejar cambios
+    setTimeout(() => { loadPedidos(); loadData(); }, 900);
   } catch(e) {
     setStatus('Error: ' + e.message, 'err');
     showToast('Error al guardar: ' + e.message, 'err');
   }
 }
 
-// ─── POLLING ─────────────────────────────────────────────────────────────────
+// ─── POLLING ──────────────────────────────────────────────────────────────────
 function startPolling() {
   clearInterval(pollTimer);
   pollTimer = setInterval(() => {
@@ -765,7 +836,7 @@ function startPolling() {
   }, POLL_MS);
 }
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 let toastT = null;
 function showToast(msg, type) {
   const t = document.getElementById('toast');
