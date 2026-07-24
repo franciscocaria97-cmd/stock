@@ -114,14 +114,95 @@
   .num-input.saving { border-color: var(--yellow); color: var(--yellow); }
   .num-input.saved  { border-color: var(--olive); color: var(--olive); }
 
-  .pedido-qty-wrap { display: inline-flex; align-items: center; gap: 5px; justify-content: flex-end; }
-  .pedido-qty { width: 56px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; text-align: center; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; background: #f8f9fb; outline: none; -moz-appearance: textfield; transition: all 0.12s; }
-  .pedido-qty::-webkit-outer-spin-button, .pedido-qty::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .pedido-qty:focus { border-color: var(--navy); background: #fff; }
-  .pedido-qty.en-carrito { border-color: var(--olive); background: var(--olive-pale); color: var(--olive); font-weight: 700; }
-  .btn-add { font-family: 'Open Sans', sans-serif; font-size: 11px; font-weight: 700; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.12s; background: var(--olive); color: #fff; white-space: nowrap; }
-  .btn-add:hover { background: var(--olive-lt); }
-  .btn-add.en-carrito { background: var(--navy); }
+  /* CANTIDAD CONTROL */
+  .qty-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  .qty-btn {
+    background: var(--border);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    color: var(--navy);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .qty-btn:hover {
+    background: var(--navy);
+    color: #fff;
+  }
+
+  .qty-btn:active {
+    transform: scale(0.95);
+  }
+
+  .qty-input {
+    width: 50px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #f8f9fb;
+    outline: none;
+    -moz-appearance: textfield;
+    transition: all 0.12s;
+  }
+
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .qty-input:focus {
+    border-color: var(--navy);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(26,54,96,0.08);
+  }
+
+  .qty-input.active-in-cart {
+    border-color: var(--olive);
+    background: var(--olive-pale);
+    color: var(--olive);
+    font-weight: 700;
+  }
+
+  .btn-add {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s;
+    background: var(--olive);
+    color: #fff;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-add:hover {
+    background: var(--olive-lt);
+  }
+
+  .btn-add.en-carrito {
+    background: var(--navy);
+  }
 
   /* LAYOUT */
   .layout { display: flex; gap: 18px; align-items: flex-start; }
@@ -178,6 +259,17 @@
   .p-item-qty { font-weight:700; color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-size:15px; }
   .pedido-actions { padding:10px 16px; display:flex; gap:8px; justify-content:flex-end; }
 
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:300; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:#fff; border-radius:8px; padding:28px 28px 20px; max-width:380px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+  .modal-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:var(--navy); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; }
+  .modal-body { font-size:13px; color:var(--text); line-height:1.6; margin-bottom:20px; }
+  .modal-body .stock-check { margin-top:12px; background:var(--red-bg); border:1px solid #fecaca; border-radius:5px; padding:10px 12px; }
+  .modal-body .stock-check .item-faltante { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+  .modal-body .stock-check .item-faltante span:last-child { font-weight:700; color:var(--red); }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+
   /* BANNER OFFLINE */
   #offline-banner { display:none; background:var(--yellow-bg); border-bottom:2px solid #fde68a; padding:8px 32px; font-size:12px; font-weight:600; color:var(--yellow); text-align:center; }
   #offline-banner.show { display:block; }
@@ -187,123 +279,131 @@
   #empty-msg { text-align:center; padding:40px; color:var(--muted); font-size:13px; display:none; }
   .no-pedidos { text-align:center; padding:36px; color:var(--muted); font-size:13px; font-style:italic; }
   .blink { animation:blink 1s step-end infinite; }
-  @keyframes blink { 50%{opacity:0} }
-  .toast { position:fixed; bottom:24px; right:24px; background:var(--navy-dark); color:#fff; font-size:13px; font-weight:600; padding:12px 20px; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.2); border-left:4px solid var(--olive-lt); transform:translateY(80px); opacity:0; transition:all 0.3s ease; z-index:200; pointer-events:none; max-width:320px; }
-  .toast.show { transform:translateY(0); opacity:1; }
-  .toast.warn { border-left-color: var(--yellow); }
-  .toast.err  { border-left-color: var(--red); }
 
-  @media (max-width:740px) {
-    .layout { flex-direction:column; }
-    .cart-panel { width:100%; position:static; margin-top:12px; }
-    .topbar { padding:0 16px; height:56px; }
-    .logo-svg { height:36px; }
-    .subbar { padding:0 12px; }
-    .tab { padding:0 12px; font-size:10px; }
-    .main { padding:0 10px; margin-top:16px; }
-    .card-header { padding:10px 12px; flex-direction:column; align-items:flex-start; }
-    #search { width:100%; }
-    th { padding:8px 8px; font-size:9px; }
-    td { padding:8px 8px; }
-    .num-input { width:60px; font-size:14px; }
-    .pedido-qty { width:44px; font-size:13px; }
-    .btn-add { font-size:10px; padding:4px 7px; }
-    .cat-filters { gap:4px; }
-    .cat-btn { font-size:10px; padding:3px 10px; }
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 400;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  #toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #toast.warn {
+    background: var(--yellow);
+  }
+
+  #toast.err {
+    background: var(--red);
   }
 </style>
 </head>
 <body>
 
-<div id="offline-banner">⚠ Sin conexión — los pedidos se guardan localmente y se enviarán al reconectar.</div>
+<div id="offline-banner">⚠ Sin conexión — los cambios se sincronizarán al conectarse</div>
 
 <div class="topbar">
-  <svg class="logo-svg" viewBox="0 0 200 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M6 32 C6 15 18 4 34 4 C43 4 51 8 56 16" stroke="#8899aa" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <circle cx="30" cy="34" r="15" fill="#5577aa" opacity="0.45"/>
-    <circle cx="30" cy="34" r="9" fill="#1a3660"/>
-    <ellipse cx="41" cy="37" rx="13" ry="9" fill="#7aaa28"/>
-    <text x="60" y="42" font-family="Arial Black, Arial, sans-serif" font-size="28" font-weight="900" fill="#1a3660" letter-spacing="1.5">POSTER</text>
-  </svg>
-  <span id="status">Conectando...</span>
+  <div style="font-size:20px; font-weight:700; color:var(--navy)">📦 Stock</div>
+  <div id="status">Cargando…</div>
 </div>
 
 <div class="subbar">
-  <div class="tab active" onclick="showTab('stock')" id="tab-stock">📦 Stock</div>
-  <div class="tab" onclick="showTab('pedidos')" id="tab-pedidos">
-    🛒 Pedidos <span class="badge" id="badge">0</span>
+  <div class="tab active" id="tab-stock" onclick="showTab('stock')">📊 Stock</div>
+  <div class="tab" id="tab-pedidos" onclick="showTab('pedidos')">
+    📋 Pedidos <span class="badge" id="badge">0</span>
   </div>
 </div>
 
 <div class="main">
-
-  <!-- STOCK -->
   <div class="page active" id="page-stock">
-
-    <div class="stats-row" id="stats-row" style="display:none">
-      <div class="stat-card">
-        <div class="stat-icon">⚠️</div>
-        <div>
-          <div class="stat-value" id="stat-alertas">—</div>
-          <div class="stat-label">Stock Bajo en Depósito</div>
-        </div>
-      </div>
-    </div>
-
     <div class="layout">
       <div class="layout-main">
+        <div id="stats-row" class="stats-row" style="display:none">
+          <div class="stat-card">
+            <div class="stat-icon">⚠</div>
+            <div>
+              <div class="stat-value" id="stat-alertas">0</div>
+              <div class="stat-label">Productos con stock bajo</div>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Stock de Productos</span>
-            <input type="search" id="search" placeholder="Buscar producto..." autocomplete="off" oninput="renderTable()">
+            <div class="card-title">Stock actual</div>
+            <input type="text" id="search" placeholder="Buscar…" oninput="renderTable()">
           </div>
-          <div id="loading">Cargando datos<span class="blink">...</span></div>
           <table id="stock-table" style="display:none">
             <thead>
               <tr>
-                <th onclick="sortBy(0)" style="width:30%">Producto</th>
-                <th style="text-align:center">Stock Fábrica</th>
-                <th style="text-align:center">Stock Depósito</th>
-                <th style="text-align:center">Pedir</th>
+                <th onclick="sortBy(0)">Producto</th>
+                <th onclick="sortBy(1)">Fábrica</th>
+                <th onclick="sortBy(2)">Depósito</th>
+                <th>Agregar al pedido</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
           </table>
-          <div id="empty-msg">No se encontraron productos.</div>
+          <div id="loading">Cargando…</div>
+          <div id="empty-msg">Sin resultados.</div>
           <div class="card-footer">
-            <div class="legend-item"><div class="legend-dot"></div><span>Fila roja = stock bajo en depósito</span></div>
-            <div style="margin-left:auto;font-size:11px;color:#9ca3af">Auto-actualización cada 10 seg</div>
+            <div class="legend-item">
+              <span class="legend-dot"></span>
+              <span>Stock bajo (por debajo del umbral)</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="cart-panel">
         <div class="cart-header">
-          <span class="cart-title">🛒 Mi Pedido</span>
+          <span class="cart-title">Carrito</span>
           <span id="cart-count">0</span>
         </div>
         <div class="cart-body" id="cart-body">
           <div class="cart-empty">Agregá productos<br>desde la tabla.</div>
         </div>
         <div class="cart-footer">
-          <button class="cart-send" id="cart-send" onclick="enviarPedido()" disabled>✓ Enviar pedido</button>
-          <button class="cart-clear" onclick="limpiarCarrito()">Limpiar carrito</button>
+          <button class="cart-send" id="cart-send" disabled onclick="enviarPedido()">✓ Enviar pedido</button>
+          <button class="cart-clear" onclick="limpiarCarrito()">✕ Limpiar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PEDIDOS -->
   <div class="page" id="page-pedidos">
     <div class="page-header">
       <h2>Pedidos</h2>
     </div>
-    <div id="pedidos-list"><div class="no-pedidos">Cargando...</div></div>
+    <div id="pedidos-list"></div>
   </div>
-
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-stock" onclick="cerrarModalStock(event)">
+  <div class="modal-box">
+    <div class="modal-title">⚠ Stock insuficiente</div>
+    <div class="modal-body" id="modal-stock-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModalStockBtn()">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -314,50 +414,53 @@ const SHEET_PEDIDOS = 'Pedidos';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbxi4T18nxSuwxqzoq8ZgHsra9ZA5bqCDbz3QSwG1duV3XSR6KbH3ZExNtqwq5QpsZ2Rzw/exec';
 const POLL_MS       = 10000;
 
-const QUEUE_KEY     = 'poster_pedidos_queue';
-const DRAFT_KEY     = 'poster_pedido_draft';
-const CARRITO_KEY   = 'poster_carrito';
-
-// ─── UMBRALES ────────────────────────────────────────────────────────────────
-const UMBRAL = {
-  'Remaches': 20000, 'Discos Flap': 10, 'Discos de desvaste': 40,
-  'Disco de corte': 100, 'Electrodo': 10, 'Arandelas': 50000,
-  'Cinta papel': 10, 'Ciano': 5, 'Mechas': 20, 'Alamabre': 50,
-  'Bolsas': 100, 'Thinner': 10, 'Diluyente': 5, 'Pintura': 20,
-  'Aguarras': 2, 'Estopa': 2,
-};
-
-function isLow(nombre, val) { const u = UMBRAL[nombre]; return u !== undefined && val < u; }
-
-function parseNum(v) {
-  const s = String(v || '0').trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
-  return parseInt(s.replace(/\./g,'')) || 0;
-}
+const QUEUE_KEY   = 'poster_pedidos_queue';
+const DRAFT_KEY   = 'poster_pedido_draft';
+const CARRITO_KEY = 'poster_carrito';
 
 // ─── ESTADO ──────────────────────────────────────────────────────────────────
 let rows = [], pedidos = [];
 let sortCol = -1, sortDir = 1, saving = new Set(), catActiva = 'todas', pollTimer = null;
 
+// Estado local de cantidades pendientes (no persistente, solo para UI)
+let qtyPendiente = {};
+
 // Carrito persiste en localStorage
 let carrito = {};
-function loadCarrito()  { try { carrito = JSON.parse(localStorage.getItem(CARRITO_KEY)||'{}'); } catch { carrito = {}; } }
+function loadCarrito()   { try { carrito = JSON.parse(localStorage.getItem(CARRITO_KEY)||'{}'); } catch { carrito = {}; } }
 function persistCarrito(){ try { localStorage.setItem(CARRITO_KEY, JSON.stringify(carrito)); } catch {} }
 
+// ─── UMBRAL (leído de la hoja, col G) ────────────────────────────────────────
+function isLow(row) {
+  if (row.umbral === null || row.umbral === undefined) return false;
+  return (row.stock_fabrica + row.stock_deposito) < row.umbral;
+}
+
+function parseNum(v) {
+  const s = String(v || '0').trim();
+  if (!s || s === '-') return 0;
+  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  return parseInt(s.replace(/\./g,'')) || 0;
+}
+
+// ─── LECTURA ROBUSTA DE CANTIDAD ────────────────────────────────────────────
+function parseQty(val) {
+  if (val === '' || val === null || val === undefined) return 0;
+  const n = parseInt(String(val).trim(), 10);
+  return isNaN(n) ? 0 : Math.max(0, n);
+}
+
 // ─── COLA OFFLINE ────────────────────────────────────────────────────────────
-function getQueue()     { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch { return []; } }
-function saveQueue(q)   { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch {} }
+function getQueue()   { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); } catch { return []; } }
+function saveQueue(q) { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch {} }
 
 async function flushQueue() {
   const queue = getQueue();
   if (!queue.length) return;
   const failed = [];
   for (const item of queue) {
-    try {
-      await scriptCallReal(item.params, 2);
-    } catch {
-      failed.push(item);
-    }
+    try { await scriptCallReal(item.params, 2); }
+    catch { failed.push(item); }
   }
   saveQueue(failed);
   if (failed.length === 0) {
@@ -366,7 +469,7 @@ async function flushQueue() {
   }
 }
 
-// ─── CONEXIÓN ────────────────────────────────────────────────────────────────
+// ─── CONEXIÓN ─────────────────────────────────────────────────────────────────
 function updateOnlineStatus() {
   const offline = !navigator.onLine;
   document.getElementById('offline-banner').classList.toggle('show', offline);
@@ -375,7 +478,7 @@ function updateOnlineStatus() {
 window.addEventListener('online',  updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
-// ─── FETCH REAL con reintentos, backoff y verificación JSON ──────────────────
+// ─── FETCH REAL con reintentos ────────────────────────────────────────────────
 async function scriptCallReal(params, retries) {
   retries = (retries !== undefined) ? retries : 3;
   const qs  = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
@@ -388,16 +491,11 @@ async function scriptCallReal(params, retries) {
       const res  = await fetch(url, { method:'GET', signal: ctrl.signal });
       clearTimeout(tid);
       if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      // Leer respuesta JSON y verificar ok:true
       const text = await res.text();
       let json;
       try { json = JSON.parse(text); } catch { json = null; }
-
-      // Si el script devuelve { ok: false } es un error de negocio
       if (json && json.ok === false) throw new Error(json.error || 'Error en el servidor');
-
-      return json; // éxito
+      return json;
     } catch (e) {
       lastErr = e;
       if (i < retries) await new Promise(r => setTimeout(r, 1200 * (i + 1)));
@@ -406,10 +504,9 @@ async function scriptCallReal(params, retries) {
   throw lastErr;
 }
 
-// scriptCall público: encola si falla definitivamente
 async function scriptCall(params) {
   try {
-    await scriptCallReal(params, 3);
+    return await scriptCallReal(params, 3);
   } catch (e) {
     const queue = getQueue();
     queue.push({ params, ts: Date.now() });
@@ -434,9 +531,7 @@ function restoreDraftIfNeeded() {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     const { payload, ts: savedAt } = JSON.parse(raw);
-    // Solo restaurar si tiene menos de 1 hora
     if (Date.now() - savedAt > 3600000) { localStorage.removeItem(DRAFT_KEY); return; }
-    // Si el carrito ya tiene items, no sobreescribir
     if (Object.keys(carrito).length > 0) return;
     (payload.items || []).forEach(i => { carrito[i.nombre] = i.cantidad; });
     persistCarrito();
@@ -456,23 +551,25 @@ function showTab(t) {
 // ─── CARGA STOCK ─────────────────────────────────────────────────────────────
 async function loadData() {
   try {
-    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_STOCK}!A2:E?key=${API_KEY}`);
+    const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_STOCK}!A2:G?key=${API_KEY}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     rows = (data.values||[]).map((r,i) => ({
-      rowIndex: i+2, nombre: r[0]||'',
+      rowIndex:       i + 2,
+      nombre:         r[0] || '',
       stock_fabrica:  parseNum(r[1]),
       stock_deposito: parseNum(r[2]),
       pedido_fabrica: parseNum(r[3]),
-      categoria: r[4]||'Sin categoría',
+      categoria:      r[4] || 'Sin categoría',
+      umbral:         r[6] !== undefined && r[6] !== '' ? parseNum(r[6]) : null,
     }));
     renderTable(); updateStats();
     setStatus('✓ ' + ts(), 'ok');
   } catch(e) { setStatus('Error: ' + e.message, 'err'); console.error(e); }
 }
 
-// ─── CARGA PEDIDOS ───────────────────────────────────────────────────────────
+// ─── CARGA PEDIDOS ────────────────────────────────────────────────────────────
 async function loadPedidos() {
   try {
     const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_PEDIDOS}!A2:G?key=${API_KEY}`);
@@ -492,7 +589,7 @@ function safeJSON(s) { try { return JSON.parse(s); } catch { return []; } }
 // ─── STATS / BADGE ───────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stats-row').style.display = 'grid';
-  document.getElementById('stat-alertas').textContent = rows.filter(r=>isLow(r.nombre, r.stock_deposito)).length;
+  document.getElementById('stat-alertas').textContent = rows.filter(r => isLow(r)).length;
 }
 
 function updateBadge() {
@@ -534,26 +631,32 @@ function renderTable() {
       tb.appendChild(cr);
     }
     items.forEach(row => {
-      const lD = isLow(row.nombre, row.stock_deposito);
+      const lD = isLow(row);
       const tr = document.createElement('tr');
       if (lD) tr.classList.add('alert-row');
       tr.dataset.row = row.rowIndex;
-      const enC = (carrito[row.nombre] || 0) > 0;
-      // Escapamos comillas en el nombre para el onclick
       const nombreEsc = row.nombre.replace(/'/g, "\\'");
+      const enC = (carrito[row.nombre] || 0) > 0;
+      
+      // Control de cantidad mejorado con + y −
+      const currentQty = qtyPendiente[row.nombre] || carrito[row.nombre] || 0;
       tr.innerHTML =
         '<td><span class="product-name">'+row.nombre+'</span></td>' +
         '<td><span class="num-display">'+row.stock_fabrica.toLocaleString('es-AR')+'</span></td>' +
         '<td><span class="num-display'+(lD?' low':'')+'">'+row.stock_deposito.toLocaleString('es-AR')+'</span></td>' +
         '<td style="text-align:center">' +
-          '<div class="pedido-qty-wrap">' +
+          '<div class="qty-control">' +
+            '<button class="qty-btn" onclick="adjustQty(\''+nombreEsc+'\', -1)">−</button>' +
             '<input type="number" min="0" step="1"' +
-              ' class="pedido-qty'+(enC?' en-carrito':'')+'"' +
-              ' placeholder="0" value="'+(carrito[row.nombre]||'')+'"' +
-              ' data-nombre="'+row.nombre+'">' +
+              ' class="qty-input'+(enC?' active-in-cart':'')+'"' +
+              ' placeholder="0" value="'+currentQty+'"' +
+              ' data-nombre="'+row.nombre+'"' +
+              ' onchange="syncQtyFromInput(this)"' +
+              ' oninput="syncQtyFromInput(this)">' +
+            '<button class="qty-btn" onclick="adjustQty(\''+nombreEsc+'\', 1)">+</button>' +
             '<button class="btn-add'+(enC?' en-carrito':'')+'"' +
               ' onclick="addToCarrito(\''+nombreEsc+'\',this)">' +
-              (enC?'✓ Listo':'+ Agregar') +
+              (enC?'✓ Listo':'Agregar') +
             '</button>' +
           '</div>' +
         '</td>';
@@ -571,15 +674,68 @@ function sortBy(col) {
   renderTable();
 }
 
+// ─── CONTROL DE CANTIDAD ─────────────────────────────────────────────────────
+function syncQtyFromInput(inp) {
+  const nombre = inp.dataset.nombre;
+  const qty = parseQty(inp.value);
+  qtyPendiente[nombre] = qty;
+}
+
+function adjustQty(nombre, delta) {
+  const current = qtyPendiente[nombre] || carrito[nombre] || 0;
+  const newQty = Math.max(0, current + delta);
+  qtyPendiente[nombre] = newQty;
+  
+  // Actualizar input en la tabla
+  const inp = document.querySelector('.qty-input[data-nombre="'+nombre+'"]');
+  if (inp) inp.value = newQty || '';
+  
+  // Actualizar visibilidad del botón
+  renderTableVisuals();
+}
+
+function renderTableVisuals() {
+  // Actualiza clases visuales sin reconstruir toda la tabla
+  Object.keys(qtyPendiente).forEach(nombre => {
+    const inp = document.querySelector('.qty-input[data-nombre="'+nombre+'"]');
+    const btn = inp ? inp.closest('td').querySelector('.btn-add') : null;
+    if (inp && btn) {
+      const qty = qtyPendiente[nombre];
+      const enC = (carrito[nombre] || 0) > 0;
+      inp.classList.toggle('active-in-cart', enC);
+      btn.classList.toggle('en-carrito', enC);
+      btn.textContent = enC ? '✓ Listo' : 'Agregar';
+    }
+  });
+}
+
 // ─── CARRITO ─────────────────────────────────────────────────────────────────
 function addToCarrito(nombre, btn) {
-  const tr  = btn.closest('tr');
-  const inp = tr ? tr.querySelector('.pedido-qty') : null;
-  const qty = parseInt(inp && inp.value) || 1;
-  if (qty <= 0) { showToast('Ingresá una cantidad mayor a 0', 'warn'); return; }
+  // Leer cantidad de qtyPendiente (fuente de verdad más reciente)
+  let qty = qtyPendiente[nombre] || 0;
+  
+  // Si no hay cantidad pendiente, intentar leerla del input como fallback
+  if (qty === 0) {
+    const inp = document.querySelector('.qty-input[data-nombre="'+nombre+'"]');
+    qty = inp ? parseQty(inp.value) : 0;
+  }
+  
+  // Validar cantidad
+  if (qty <= 0) { 
+    showToast('Ingresá una cantidad mayor a 0', 'warn'); 
+    return; 
+  }
+  
+  // Agregar al carrito
   carrito[nombre] = qty;
   persistCarrito();
-  renderCart(); renderTable();
+  
+  // Limpiar estado pendiente
+  delete qtyPendiente[nombre];
+  
+  // Actualizar UI sin recrear inputs innecesariamente
+  renderCart();
+  renderTableVisuals();
   showToast('✓ ' + nombre + ' agregado');
 }
 
@@ -605,19 +761,23 @@ function renderCart() {
 function quitarItem(nombre) {
   delete carrito[nombre];
   persistCarrito();
-  const inp = document.querySelector('.pedido-qty[data-nombre="'+nombre+'"]');
+  delete qtyPendiente[nombre];
+  const inp = document.querySelector('.qty-input[data-nombre="'+nombre+'"]');
   if (inp) inp.value = '';
-  renderCart(); renderTable();
+  renderCart();
+  renderTableVisuals();
 }
 
 function limpiarCarrito() {
   carrito = {};
+  qtyPendiente = {};
   persistCarrito();
-  document.querySelectorAll('.pedido-qty').forEach(i => i.value = '');
-  renderCart(); renderTable();
+  document.querySelectorAll('.qty-input').forEach(i => i.value = '');
+  renderCart();
+  renderTableVisuals();
 }
 
-// ─── ENVIAR PEDIDO ───────────────────────────────────────────────────────────
+// ─── ENVIAR PEDIDO ────────────────────────────────────────────────────────────
 async function enviarPedido() {
   const items = Object.entries(carrito)
     .filter(([,v]) => v > 0)
@@ -632,7 +792,6 @@ async function enviarPedido() {
     quien: 'Alejandro',
   };
 
-  // Guardar draft ANTES de enviar — sobrevive refresh/cierre de pestaña
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ payload, ts: Date.now() })); } catch {}
 
   setStatus('Enviando...', 'saving');
@@ -642,27 +801,45 @@ async function enviarPedido() {
 
   try {
     await scriptCall({ action: 'pedido', data: JSON.stringify(payload) });
-
-    // Éxito confirmado
     localStorage.removeItem(DRAFT_KEY);
     setStatus('✓ ' + ts(), 'ok');
     showToast('✓ Pedido enviado y confirmado');
     limpiarCarrito();
     btn.textContent = '✓ Enviar pedido';
     setTimeout(() => loadPedidos(), 900);
-
   } catch (e) {
-    // Fallo — el pedido ya está en la cola offline
     setStatus('⚠ Sin conexión — pedido guardado localmente', 'saving');
     btn.disabled = false;
     btn.textContent = '✓ Enviar pedido';
     showToast('⚠ Sin conexión. Se enviará al reconectar.', 'warn');
     console.error('[enviarPedido]', e);
-    // No limpiar el carrito: el usuario puede reintentar
   }
 }
 
-// ─── PEDIDOS LIST ────────────────────────────────────────────────────────────
+// ─── MODAL STOCK INSUFICIENTE ─────────────────────────────────────────────────
+function mostrarModalStockInsuficiente(faltantes) {
+  const filas = faltantes.map(f =>
+    '<div class="item-faltante">' +
+      '<span>'+f.nombre+'</span>' +
+      '<span>Pedido: '+f.pedido+' — Depósito: '+f.deposito+' (faltan '+f.falta+')</span>' +
+    '</div>'
+  ).join('');
+  document.getElementById('modal-stock-body').innerHTML =
+    'No hay suficiente stock en depósito para entregar este pedido. ' +
+    'Comprá el stock faltante antes de marcarlo como entregado.' +
+    '<div class="stock-check">'+filas+'</div>';
+  document.getElementById('modal-stock').classList.add('show');
+}
+
+function cerrarModalStockBtn() {
+  document.getElementById('modal-stock').classList.remove('show');
+}
+
+function cerrarModalStock(event) {
+  if (event.target === document.getElementById('modal-stock')) cerrarModalStockBtn();
+}
+
+// ─── PEDIDOS LIST ─────────────────────────────────────────────────────────────
 function renderPedidos() {
   const pendientes = pedidos.filter(p => p.status === 'pendiente');
   const historial  = [...pedidos.filter(p => p.status !== 'pendiente')].reverse();
@@ -697,7 +874,7 @@ function pedidoCard(p) {
   } else if (p.status === 'aprobado') {
     actions =
       '<div class="pedido-actions">' +
-        '<button class="btn btn-olive btn-sm" onclick="responderPedido('+p.rowIndex+',\'entregado\')">📦 Marcar como entregado</button>' +
+        '<button class="btn btn-olive btn-sm" onclick="intentarEntregar('+p.rowIndex+')">📦 Marcar como entregado</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="borrarPedido('+p.rowIndex+')" style="margin-left:6px">🗑 Borrar</button>' +
       '</div>';
   } else {
@@ -723,6 +900,34 @@ function pedidoCard(p) {
   );
 }
 
+// ─── ENTREGAR PEDIDO (con verificación de stock) ──────────────────────────────
+function intentarEntregar(rowIndex) {
+  const pedido = pedidos.find(p => p.rowIndex == rowIndex);
+  if (!pedido) return;
+
+  const faltantes = [];
+  (pedido.items || []).forEach(item => {
+    const row = rows.find(r => r.nombre === item.nombre);
+    const stockDeposito = row ? row.stock_deposito : 0;
+    if (stockDeposito < item.cantidad) {
+      faltantes.push({
+        nombre:   item.nombre,
+        pedido:   item.cantidad,
+        deposito: stockDeposito,
+        falta:    item.cantidad - stockDeposito,
+      });
+    }
+  });
+
+  if (faltantes.length > 0) {
+    mostrarModalStockInsuficiente(faltantes);
+    return;
+  }
+
+  if (!confirm('¿Confirmar entrega? Se descontará del depósito y se sumará a fábrica.')) return;
+  responderPedido(rowIndex, 'entregado');
+}
+
 async function borrarPedido(rowIndex) {
   if (!confirm('¿Borrar este pedido del historial?')) return;
   setStatus('Borrando...', 'saving');
@@ -742,22 +947,31 @@ async function responderPedido(rowIndex, nuevoStatus) {
   setStatus('Guardando...', 'saving');
   try {
     const fechaEntrega = nuevoStatus === 'entregado' ? new Date().toLocaleString('es-AR') : '';
-    await scriptCall({ action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega });
+
+    let params = { action:'status', row:rowIndex, status:nuevoStatus, fecha_entrega:fechaEntrega };
+    if (nuevoStatus === 'entregado') {
+      const pedido = pedidos.find(p => p.rowIndex == rowIndex);
+      if (pedido) params.items = JSON.stringify(pedido.items || []);
+    }
+
+    await scriptCall(params);
+
     const p = pedidos.find(p => p.rowIndex == rowIndex);
-    if (p) p.status = nuevoStatus;
+    if (p) { p.status = nuevoStatus; if (fechaEntrega) p.fecha_entrega = fechaEntrega; }
     setStatus('✓ ' + ts(), 'ok');
-    const msg = nuevoStatus === 'aprobado' ? '✓ Pedido aprobado' :
-                nuevoStatus === 'rechazado' ? '✕ Pedido rechazado' : '📦 Marcado como entregado';
+    const msg = nuevoStatus === 'aprobado'  ? '✓ Pedido aprobado' :
+                nuevoStatus === 'rechazado' ? '✕ Pedido rechazado' :
+                                              '📦 Entregado — stock actualizado';
     showToast(msg);
     renderPedidos(); updateBadge();
-    setTimeout(() => loadPedidos(), 900);
+    setTimeout(() => { loadPedidos(); loadData(); }, 900);
   } catch(e) {
     setStatus('Error: ' + e.message, 'err');
     showToast('Error al guardar: ' + e.message, 'err');
   }
 }
 
-// ─── POLLING ─────────────────────────────────────────────────────────────────
+// ─── POLLING ──────────────────────────────────────────────────────────────────
 function startPolling() {
   clearInterval(pollTimer);
   pollTimer = setInterval(() => {
@@ -765,12 +979,12 @@ function startPolling() {
   }, POLL_MS);
 }
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 let toastT = null;
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (type ? ' ' + type : '');
+  t.className = 'show' + (type ? ' ' + type : '');
   clearTimeout(toastT);
   toastT = setTimeout(() => t.classList.remove('show'), 3500);
 }
